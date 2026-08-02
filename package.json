@@ -1,0 +1,29 @@
+{
+  "name": "solar-panel-monitoring-system",
+  "version": "1.0.0",
+  "description": "Industrial IoT Solar Panel Efficiency Monitoring & Telemetry Analytics Platform",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "server": "node server/index.js",
+    "client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm --prefix client run build"
+  },
+  "keywords": [
+    "solar",
+    "efficiency",
+    "monitoring",
+    "iot",
+    "react",
+    "express",
+    "mongodb",
+    "chartjs"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

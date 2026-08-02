@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-warmBg text-primaryText font-sans transition-colors duration-200 antialiased selection:bg-forest-500 selection:text-white;
+  }
+}
+
+/* Minimal Enterprise Card Rules */
+.saas-card {
+  @apply bg-white dark:bg-[#181818] border border-borderNeutral dark:border-[#2A2A2A] rounded-2xl shadow-subtle transition-all duration-200;
+}
+
+.saas-card:hover {
+  @apply border-slate-300 dark:border-[#383838] shadow-card;
+}
+
+/* Custom Minimal Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D1D5DB;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #383838;
+}
