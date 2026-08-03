@@ -170,7 +170,7 @@ const RegisterPage = () => {
         <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-white/10">
           Already registered?{' '}
           <Link to="/login" className="text-solar-600 dark:text-skyAccent-400 font-bold hover:underline">
-            Sign In Instead
+            Sign In 
           </Link>
         </div>
 

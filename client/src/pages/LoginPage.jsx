@@ -73,7 +73,8 @@ const LoginPage = () => {
         </div>
 
         {/* Demo Credentials Tip */}
-        <div className="p-3 rounded-xl bg-solar-500/10 border border-solar-500/20 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
+        
+        {/* <div className="p-3 rounded-xl bg-solar-500/10 border border-solar-500/20 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
           <div>
             <span className="font-bold text-solar-600 dark:text-solar-400">Demo Operator:</span>
             <br />
@@ -85,7 +86,7 @@ const LoginPage = () => {
           >
             Auto Fill
           </button>
-        </div>
+        </div> */}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -148,7 +148,7 @@ const ProfilePage = () => {
               </div>
               <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                 <Phone className="w-4 h-4 text-skyAccent-400 flex-shrink-0" />
-                <span>{user?.phone || '+1 (555) 234-5678'}</span>
+                <span>{user?.phone || '+91 0123456789'}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                 <Calendar className="w-4 h-4 text-amber-500 flex-shrink-0" />
