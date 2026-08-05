@@ -4,10 +4,9 @@ import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import { fetchPanelsApi, createPanelApi, updatePanelApi, deletePanelApi } from '../services/api';
 import {
-  Activity,
+  Grid as GridIcon,
+  List as ListIcon,
   Search,
-  Filter,
-  ArrowUpDown,
   Plus,
   SlidersHorizontal,
   Wrench,
@@ -16,6 +15,7 @@ import {
   Zap,
   MapPin,
   Calendar,
+  Activity,
   CheckCircle2,
   AlertCircle,
   Clock,
@@ -25,12 +25,13 @@ import {
 const MonitoringPage = () => {
   const [panels, setPanels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
 
   // Search, Filter, Sort state
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [locationFilter, setLocationFilter] = useState('All');
   const [sortBy, setSortBy] = useState('panelId');
-  const [sortOrder, setSortOrder] = useState('asc');
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,7 +41,7 @@ const MonitoringPage = () => {
     model: 'SunPower Maxeon 6 400W',
     type: 'Monocrystalline Silicon',
     status: 'Active',
-    location: '',
+    location: 'Rooftop Field Annex',
     ratedCapacityKW: 4.0,
     tiltAngleDeg: 28,
     azimuthDeg: 180
@@ -54,8 +55,7 @@ const MonitoringPage = () => {
       const res = await fetchPanelsApi({
         search,
         status: statusFilter,
-        sortBy,
-        sortOrder
+        sortBy
       });
       if (res.data.success) {
         setPanels(res.data.data);
@@ -70,7 +70,7 @@ const MonitoringPage = () => {
 
   useEffect(() => {
     loadPanels();
-  }, [search, statusFilter, sortBy, sortOrder]);
+  }, [search, statusFilter, sortBy]);
 
   const handleOpenAddModal = () => {
     setEditingPanel(null);
@@ -102,338 +102,436 @@ const MonitoringPage = () => {
     setModalOpen(true);
   };
 
-  const handleSavePanel = async (e) => {
+  const handleSubmitModal = async (e) => {
     e.preventDefault();
     try {
       if (editingPanel) {
         await updatePanelApi(editingPanel._id || editingPanel.panelId, formData);
-        setToast({ message: `Panel ${formData.panelId} configuration updated!`, type: 'success' });
+        setToast({ message: `Panel ${formData.panelId} updated successfully.`, type: 'success' });
       } else {
         await createPanelApi(formData);
-        setToast({ message: `New panel ${formData.panelId} registered in solar fleet!`, type: 'success' });
+        setToast({ message: `New panel ${formData.panelId} registered.`, type: 'success' });
       }
       setModalOpen(false);
       loadPanels();
     } catch (err) {
-      setToast({ message: err.response?.data?.message || 'Failed to save panel configuration.', type: 'error' });
+      console.error('Save panel error:', err);
+      setToast({ message: err.response?.data?.error || 'Failed to save panel.', type: 'error' });
     }
   };
 
-  const handleDeletePanel = async (id, panelId) => {
-    if (window.confirm(`Are you sure you want to remove panel ${panelId} from monitoring?`)) {
-      try {
-        await deletePanelApi(id);
-        setToast({ message: `Panel ${panelId} removed.`, type: 'info' });
-        loadPanels();
-      } catch (err) {
-        setToast({ message: 'Failed to delete panel.', type: 'error' });
-      }
+  const handleDelete = async (id, panelId) => {
+    if (!window.confirm(`Are you sure you want to unregister panel ${panelId}?`)) return;
+    try {
+      await deletePanelApi(id);
+      setToast({ message: `Panel ${panelId} removed from inventory.`, type: 'success' });
+      loadPanels();
+    } catch (err) {
+      setToast({ message: 'Failed to delete panel.', type: 'error' });
     }
   };
 
-  const statusBadge = (status) => {
+  const filteredPanels = panels.filter((p) => {
+    const matchesLoc = locationFilter === 'All' || p.location.toLowerCase().includes(locationFilter.toLowerCase());
+    return matchesLoc;
+  });
+
+  const getStatusChip = (status) => {
     switch (status) {
       case 'Active':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"><CheckCircle2 className="w-3.5 h-3.5" /> Active</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-forest-500/10 text-forest-500 border border-forest-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-forest-500"></span> Online
+          </span>
+        );
       case 'Degraded':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"><AlertCircle className="w-3.5 h-3.5" /> Degraded</span>;
+      case 'Warning':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Warning
+          </span>
+        );
       case 'Maintenance':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-skyAccent-400/15 text-skyAccent-500 border border-skyAccent-400/30"><Clock className="w-3.5 h-3.5" /> Maintenance</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sand-400/20 text-copper-600 border border-sand-400/40">
+            <span className="w-1.5 h-1.5 rounded-full bg-copper-500"></span> Maintenance
+          </span>
+        );
       case 'Offline':
+      case 'Critical':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Offline
+          </span>
+        );
       default:
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"><XCircle className="w-3.5 h-3.5" /> Offline</span>;
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400">
+            {status}
+          </span>
+        );
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-lightBg dark:bg-navy-950 transition-colors">
+    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10">
+        {/* Header & Main Controls Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
-            <span className="text-xs font-bold text-solar-500 uppercase tracking-wider">Fleet Management</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-              Solar Panel Monitoring Console
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+              Solar Array Fleet Inventory
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Detailed telemetry inspection, status filtering, and panel configuration
+            <p className="text-xs text-secondaryText mt-0.5">
+              Monitor, calibrate, and configure individual photovoltaic panel telemetry modules
             </p>
           </div>
 
-          <button
-            onClick={handleOpenAddModal}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-solar-500 to-solar-600 hover:from-solar-600 hover:to-solar-700 text-white font-bold text-xs shadow-lg shadow-solar-500/25 transition-all hover:scale-105"
-          >
-            <Plus className="w-4 h-4" /> Add Solar Panel
-          </button>
-        </div>
-
-        {/* Search, Filter & Sort Bar */}
-        <div className="glass-panel p-4 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Panel ID, Location, or Model..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-solar-500"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            
-            {/* Filter by Status */}
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <Filter className="w-4 h-4 text-solar-500" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Active">Active Only</option>
-                <option value="Degraded">Degraded Only</option>
-                <option value="Maintenance">Maintenance Only</option>
-                <option value="Offline">Offline Only</option>
-              </select>
-            </div>
-
-            {/* Sort Field */}
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <ArrowUpDown className="w-4 h-4 text-skyAccent-400" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none"
-              >
-                <option value="panelId">Sort by ID</option>
-                <option value="currentOutputKW">Sort by Output (kW)</option>
-                <option value="efficiency">Sort by Efficiency (%)</option>
-                <option value="temperatureC">Sort by Temp (°C)</option>
-              </select>
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center p-1 bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] rounded-xl">
               <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-2.5 py-2 rounded-xl bg-slate-200 dark:bg-white/10 text-xs font-bold text-slate-700 dark:text-slate-300"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-forest-500 text-white'
+                    : 'text-secondaryText hover:text-primaryText'
+                }`}
+                title="Grid view"
               >
-                {sortOrder.toUpperCase()}
+                <GridIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Grid</span>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-forest-500 text-white'
+                    : 'text-secondaryText hover:text-primaryText'
+                }`}
+                title="List view"
+              >
+                <ListIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">List</span>
               </button>
             </div>
 
+            <button
+              onClick={handleOpenAddModal}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs transition-colors shadow-subtle"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Register Panel</span>
+            </button>
           </div>
-
         </div>
 
-        {/* Panel Telemetry Grid & Table */}
-        {loading ? (
-          <div className="py-20 text-center text-slate-400">Loading solar panels...</div>
-        ) : panels.length === 0 ? (
-          <div className="glass-panel p-12 text-center rounded-3xl space-y-3">
-            <Zap className="w-12 h-12 text-slate-400 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No Solar Panels Found</h3>
-            <p className="text-xs text-slate-500">Try adjusting your search keywords or filter criteria.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {panels.map((panel) => (
-              <div
-                key={panel._id || panel.panelId}
-                className="glass-panel p-5 rounded-2xl glass-card border border-slate-200 dark:border-white/10 flex flex-col justify-between space-y-4 relative group"
+        {/* Filter Toolbar */}
+        <div className="saas-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            
+            {/* Search Input */}
+            <div className="relative w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Search panel ID, model..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-secondaryText font-medium">Status:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
-                {/* Header info */}
+                <option value="All">All Statuses</option>
+                <option value="Active">Online</option>
+                <option value="Degraded">Warning</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Offline">Offline</option>
+              </select>
+            </div>
+
+            {/* Sector Filter */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-secondaryText font-medium">Sector:</span>
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+              >
+                <option value="All">All Sectors</option>
+                <option value="Rooftop">Rooftop Field</option>
+                <option value="Ground">Ground Array</option>
+                <option value="Carport">Carport Sector</option>
+              </select>
+            </div>
+
+          </div>
+
+          {/* Sort Selector */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-secondaryText font-medium">Sort by:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+            >
+              <option value="panelId">Panel ID</option>
+              <option value="currentPowerKW">Power Output</option>
+              <option value="efficiencyPct">Efficiency</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Content View */}
+        {loading ? (
+          <div className="py-16 flex flex-col items-center justify-center gap-2 text-forest-500">
+            <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-semibold text-secondaryText">Loading panel inventory...</span>
+          </div>
+        ) : filteredPanels.length === 0 ? (
+          <div className="saas-card p-12 text-center space-y-2">
+            <p className="text-sm font-semibold text-primaryText dark:text-white">No solar panels found</p>
+            <p className="text-xs text-secondaryText">Try adjusting your search criteria or register a new module.</p>
+          </div>
+        ) : viewMode === 'grid' ? (
+          /* GRID VIEW */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredPanels.map((panel) => (
+              <div key={panel.panelId} className="saas-card p-4 flex flex-col justify-between space-y-4">
+                
+                {/* Top Info */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-base font-extrabold text-navy-900 dark:text-white tracking-tight block">
-                      {panel.panelId}
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block max-w-[150px]">
-                      {panel.model}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-primaryText dark:text-white">{panel.panelId}</span>
+                      {getStatusChip(panel.status)}
+                    </div>
+                    <p className="text-[11px] text-secondaryText mt-0.5 truncate">{panel.model}</p>
                   </div>
-                  {statusBadge(panel.status)}
-                </div>
-
-                {/* Telemetry Metrics */}
-                <div className="grid grid-cols-2 gap-2 bg-slate-100/50 dark:bg-navy-900/50 p-3 rounded-xl border border-slate-200/50 dark:border-white/5 text-xs">
-                  <div>
-                    <span className="text-[10px] font-semibold text-slate-400 block">Current Output</span>
-                    <span className="text-sm font-bold text-solar-500">{panel.currentOutputKW} kW</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-semibold text-slate-400 block">Efficiency</span>
-                    <span className="text-sm font-bold text-skyAccent-400">{panel.efficiency}%</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-semibold text-slate-400 block">Temperature</span>
-                    <span className={`text-xs font-bold ${panel.temperatureC > 50 ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                      {panel.temperatureC}°C
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-semibold text-slate-400 block">Voltage / Current</span>
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {panel.voltageV}V / {panel.currentA}A
-                    </span>
+                  
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEditModal(panel)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-primaryText hover:bg-slate-100 dark:hover:bg-[#2A2A2A] transition-colors"
+                      title="Edit"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(panel._id || panel.panelId, panel.panelId)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Location & Dates */}
-                <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <MapPin className="w-3.5 h-3.5 text-solar-500 flex-shrink-0" />
-                    <span className="truncate">{panel.location}</span>
+                {/* Metrics Breakdown */}
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626]">
+                  <div>
+                    <span className="text-[10px] font-semibold text-secondaryText block">Power Output</span>
+                    <span className="text-sm font-bold text-primaryText dark:text-white">{panel.currentPowerKW} kW</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-slate-400" /> Installed: {panel.installationDate}
-                    </span>
+                  <div>
+                    <span className="text-[10px] font-semibold text-secondaryText block">Efficiency</span>
+                    <span className="text-sm font-bold text-forest-500">{panel.efficiencyPct}%</span>
                   </div>
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/40 dark:border-white/5 text-[10px]">
-                    <span>Last Maint:</span>
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">
-                      {panel.lastMaintenanceDate || 'None recorded'}
-                    </span>
+                  <div>
+                    <span className="text-[10px] font-semibold text-secondaryText block">Voltage</span>
+                    <span className="text-xs font-medium text-primaryText dark:text-slate-200">{panel.voltageV} V</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-semibold text-secondaryText block">Temperature</span>
+                    <span className="text-xs font-medium text-primaryText dark:text-slate-200">{panel.temperatureC}°C</span>
                   </div>
                 </div>
 
-                {/* Card Action Buttons */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-white/10">
-                  <button
-                    onClick={() => handleOpenEditModal(panel)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-solar-500 hover:bg-solar-500/10 transition-colors"
-                    title="Edit Panel Configuration"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeletePanel(panel._id || panel.panelId, panel.panelId)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                    title="Remove Panel"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                {/* Footer Subtext */}
+                <div className="flex items-center justify-between text-[11px] text-secondaryText pt-1 border-t border-borderNeutral dark:border-[#262626]">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-slate-400" />
+                    <span className="truncate max-w-[140px]">{panel.location}</span>
+                  </span>
+                  <span>Cap: {panel.ratedCapacityKW} kW</span>
                 </div>
 
               </div>
             ))}
           </div>
+        ) : (
+          /* LIST VIEW */
+          <div className="saas-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold sticky top-0">
+                  <tr>
+                    <th className="py-3 px-4">Panel ID</th>
+                    <th className="py-3 px-4">Model & Type</th>
+                    <th className="py-3 px-4">Location</th>
+                    <th className="py-3 px-4">Rated Cap</th>
+                    <th className="py-3 px-4">Power</th>
+                    <th className="py-3 px-4">Voltage</th>
+                    <th className="py-3 px-4">Temp</th>
+                    <th className="py-3 px-4">Efficiency</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-borderNeutral dark:divide-[#262626]">
+                  {filteredPanels.map((panel) => (
+                    <tr key={panel.panelId} className="hover:bg-slate-50/60 dark:hover:bg-[#222] transition-colors">
+                      <td className="py-3 px-4 font-bold text-primaryText dark:text-white">{panel.panelId}</td>
+                      <td className="py-3 px-4 text-secondaryText">
+                        <div className="font-medium text-primaryText dark:text-slate-200">{panel.model}</div>
+                        <div className="text-[10px] text-secondaryText">{panel.type}</div>
+                      </td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.location}</td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.ratedCapacityKW} kW</td>
+                      <td className="py-3 px-4 font-semibold text-primaryText dark:text-white">{panel.currentPowerKW} kW</td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.voltageV} V</td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.temperatureC}°C</td>
+                      <td className="py-3 px-4 font-bold text-forest-500">{panel.efficiencyPct}%</td>
+                      <td className="py-3 px-4">{getStatusChip(panel.status)}</td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenEditModal(panel)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-primaryText hover:bg-slate-100 dark:hover:bg-[#2A2A2A]"
+                            title="Edit"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(panel._id || panel.panelId, panel.panelId)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-500/10"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
       </main>
 
-      {/* Add / Edit Solar Panel Modal */}
+      {/* Add / Edit Panel Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingPanel ? `Edit Panel ${editingPanel.panelId}` : 'Register New Solar Panel'}
+        title={editingPanel ? `Edit Telemetry: ${editingPanel.panelId}` : 'Register New Photovoltaic Module'}
       >
-        <form onSubmit={handleSavePanel} className="space-y-4">
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Panel ID</label>
+        <form onSubmit={handleSubmitModal} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Panel Identifier</label>
               <input
                 type="text"
+                required
                 value={formData.panelId}
                 onChange={(e) => setFormData({ ...formData, panelId: e.target.value })}
-                placeholder="SP-109"
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                required
-                disabled={!!editingPanel}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Operational Status</label>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Operational Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
-                <option value="Active">Active</option>
-                <option value="Degraded">Degraded</option>
-                <option value="Maintenance">Maintenance</option>
+                <option value="Active">Online (Active)</option>
+                <option value="Degraded">Warning (Degraded)</option>
+                <option value="Maintenance">Maintenance Required</option>
                 <option value="Offline">Offline</option>
               </select>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Panel Model</label>
+          <div>
+            <label className="block font-semibold text-secondaryText mb-1">Model & Specification</label>
             <input
               type="text"
+              required
               value={formData.model}
               onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              placeholder="SunPower Maxeon 6 400W"
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-              required
+              className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Location / Field Substation</label>
+          <div>
+            <label className="block font-semibold text-secondaryText mb-1">Substation Location Sector</label>
             <input
               type="text"
+              required
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="Rooftop Sector Alpha (Bay 3)"
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-              required
+              className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Capacity (kW)</label>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Rated Capacity (kW)</label>
               <input
                 type="number"
                 step="0.1"
-                value={formData.ratedCapacityKW}
-                onChange={(e) => setFormData({ ...formData, ratedCapacityKW: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
                 required
+                value={formData.ratedCapacityKW}
+                onChange={(e) => setFormData({ ...formData, ratedCapacityKW: parseFloat(e.target.value) })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tilt Angle (°)</label>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Tilt Angle (°)</label>
               <input
                 type="number"
                 value={formData.tiltAngleDeg}
-                onChange={(e) => setFormData({ ...formData, tiltAngleDeg: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                onChange={(e) => setFormData({ ...formData, tiltAngleDeg: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Azimuth (°)</label>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Azimuth (°)</label>
               <input
                 type="number"
                 value={formData.azimuthDeg}
-                onChange={(e) => setFormData({ ...formData, azimuthDeg: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                onChange={(e) => setFormData({ ...formData, azimuthDeg: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+          <div className="flex justify-end gap-3 pt-3 border-t border-borderNeutral dark:border-[#262626]">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+              className="px-4 py-2 rounded-xl border border-borderNeutral dark:border-[#333] text-secondaryText hover:text-primaryText font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold rounded-xl bg-solar-500 text-white hover:bg-solar-600 shadow-md shadow-solar-500/20"
+              className="px-4 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold shadow-subtle"
             >
-              Save Configuration
+              {editingPanel ? 'Save Changes' : 'Register Module'}
             </button>
           </div>
         </form>

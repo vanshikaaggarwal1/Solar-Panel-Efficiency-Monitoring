@@ -2,220 +2,114 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
-import Modal from '../components/Modal';
-import { Zap, Mail, Lock, ArrowRight, KeyRound, CheckSquare, Square } from 'lucide-react';
+import { Sun, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState({ message: '', type: 'info' });
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('admin@solar.com');
-  const [password, setPassword] = useState('admin123');
-  const [rememberMe, setRememberMe] = useState(true);
-
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ message: '', type: 'info' });
-  const [forgotModalOpen, setForgotModalOpen] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setToast({ message: 'Please enter both email and password.', type: 'error' });
-      return;
-    }
-
-    setLoading(true);
+    setSubmitting(true);
     try {
       const res = await login({ email, password });
       if (res.success) {
-        setToast({ message: 'Login successful! Redirecting to Dashboard...', type: 'success' });
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+        setToast({ message: 'Authentication successful. Redirecting to console...', type: 'success' });
+        setTimeout(() => navigate('/dashboard'), 400);
+      } else {
+        setToast({ message: res.error || 'Invalid credentials.', type: 'error' });
       }
     } catch (err) {
-      const errMsg = err.response?.data?.message || 'Login failed. Invalid credentials.';
-      setToast({ message: errMsg, type: 'error' });
+      setToast({ message: 'Login authentication error.', type: 'error' });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const handleForgotSubmit = (e) => {
-    e.preventDefault();
-    setToast({ message: `Password reset link sent to ${resetEmail || email}`, type: 'info' });
-    setForgotModalOpen(false);
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-lightBg dark:bg-navy-950 p-4 relative overflow-hidden transition-colors">
-      
-      {/* Glow Orbs */}
-      <div className="absolute top-1/4 left-1/3 w-80 h-80 rounded-full bg-solar-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 rounded-full bg-skyAccent-400/10 blur-3xl pointer-events-none" />
-
-      <div className="w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 relative z-10 space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-warmBg dark:bg-[#121212] px-4 py-12 transition-colors">
+      <div className="w-full max-w-md space-y-6">
         
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-solar-600 to-skyAccent-400 p-0.5 mx-auto flex items-center justify-center shadow-lg shadow-solar-500/20">
-            <div className="w-full h-full bg-navy-900 rounded-[14px] flex items-center justify-center">
-              <Zap className="w-7 h-7 text-skyAccent-400" />
-            </div>
+        {/* Header Logo */}
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="w-10 h-10 rounded-xl bg-forest-500 text-white flex items-center justify-center shadow-subtle">
+            <Sun className="w-5 h-5 text-sand-400" />
           </div>
-          <h2 className="text-2xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-            Welcome Back
+          <h2 className="text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+            Solarix Telemetry Operator Portal
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Sign in to access real-time solar telemetry & analytics
+          <p className="text-xs text-secondaryText">
+            Sign in to access live substation console and field telemetry
           </p>
         </div>
 
-        {/* Demo Credentials Tip */}
-        
-        {/* <div className="p-3 rounded-xl bg-solar-500/10 border border-solar-500/20 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
-          <div>
-            <span className="font-bold text-solar-600 dark:text-solar-400">Demo Operator:</span>
-            <br />
-            admin@solar.com / admin123
-          </div>
-          <button
-            onClick={() => { setEmail('admin@solar.com'); setPassword('admin123'); }}
-            className="px-2.5 py-1 rounded bg-solar-500 text-white text-[11px] font-semibold hover:bg-solar-600 transition-colors"
-          >
-            Auto Fill
-          </button>
-        </div> */}
-
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Email */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="operator@solar.com"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-slate-100/70 dark:bg-navy-900/60 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-solar-500 transition-all"
-                required
-              />
+        {/* Card Form */}
+        <div className="saas-card p-6 space-y-4 bg-white dark:bg-[#181818] border border-borderNeutral dark:border-[#262626]">
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Operator Email</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="email"
+                  required
+                  placeholder="operator@solarix.energy"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Password */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-slate-100/70 dark:bg-navy-900/60 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-solar-500 transition-all"
-                required
-              />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-semibold text-secondaryText">Password</label>
+                <span className="text-[10px] text-forest-500 cursor-pointer hover:underline">Forgot password?</span>
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between text-xs pt-1">
-            <button
-              type="button"
-              onClick={() => setRememberMe(!rememberMe)}
-              className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white"
-            >
-              {rememberMe ? (
-                <CheckSquare className="w-4 h-4 text-solar-500" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-400" />
-              )}
-              <span>Remember Me</span>
-            </button>
 
             <button
-              type="button"
-              onClick={() => setForgotModalOpen(true)}
-              className="text-solar-600 dark:text-skyAccent-400 font-semibold hover:underline"
+              type="submit"
+              disabled={submitting}
+              className="w-full py-2.5 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors mt-2"
             >
-              Forgot Password?
+              <span>Sign In to Console</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
+          </form>
+
+          {/* Quick Demo Login Hint */}
+          <div className="pt-3 border-t border-borderNeutral dark:border-[#262626] text-center">
+            <p className="text-[11px] text-secondaryText">
+              Demo Credentials: <span className="font-mono text-primaryText dark:text-white">admin@solarix.com</span> / <span className="font-mono text-primaryText dark:text-white">admin123</span>
+            </p>
           </div>
+        </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-solar-500 to-solar-600 hover:from-solar-600 hover:to-solar-700 text-white font-bold text-sm shadow-lg shadow-solar-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.01] disabled:opacity-50"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <span>Sign In to System</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Footer link to Register */}
-        <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-white/10">
+        <div className="text-center text-xs text-secondaryText">
           Don't have an operator account?{' '}
-          <Link to="/register" className="text-solar-600 dark:text-skyAccent-400 font-bold hover:underline">
-            Register Here
+          <Link to="/register" className="font-semibold text-forest-500 hover:underline">
+            Register Operator Account
           </Link>
         </div>
 
       </div>
-
-      {/* Forgot Password Modal */}
-      <Modal
-        isOpen={forgotModalOpen}
-        onClose={() => setForgotModalOpen(false)}
-        title="Reset Account Password"
-      >
-        <form onSubmit={handleForgotSubmit} className="space-y-4">
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Enter your registered operator email address to receive password recovery instructions and a single-use authentication pin.
-          </p>
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Registered Email</label>
-            <input
-              type="email"
-              value={resetEmail}
-              onChange={(e) => setResetEmail(e.target.value)}
-              placeholder="operator@solar.com"
-              className="w-full px-4 py-2.5 rounded-xl text-sm bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setForgotModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-xs font-bold rounded-lg bg-solar-500 text-white hover:bg-solar-600"
-            >
-              Send Reset Link
-            </button>
-          </div>
-        </form>
-      </Modal>
 
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />
     </div>

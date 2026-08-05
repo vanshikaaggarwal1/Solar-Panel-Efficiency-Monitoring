@@ -11,15 +11,20 @@ import {
   CheckCircle2,
   Clock,
   UserCheck,
-  Calendar,
+  Calendar as CalendarIcon,
+  List as ListIcon,
   AlertCircle,
   ShieldCheck,
-  FileCheck
+  User,
+  Check,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const MaintenancePage = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'calendar'
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
   // Modal State
@@ -27,12 +32,12 @@ const MaintenancePage = () => {
   const [editingTicket, setEditingTicket] = useState(null);
   const [formData, setFormData] = useState({
     panelId: 'SP-103',
-    issue: 'Thermal Hotspot & Bypass Diode Inspection',
-    assignedEngineer: 'Elena Rostova',
+    issue: 'Bypass Diode Thermal Calibration',
+    assignedEngineer: 'Dr. Marcus Vance',
     status: 'Scheduled',
     scheduledDate: new Date().toISOString().split('T')[0],
     priority: 'High',
-    notes: 'Perform thermal imaging and clean glass surface.'
+    notes: 'Perform thermal camera inspection and clear anti-reflective glass accumulation.'
   });
 
   const loadMaintenance = async () => {
@@ -58,12 +63,12 @@ const MaintenancePage = () => {
     setEditingTicket(null);
     setFormData({
       panelId: 'SP-103',
-      issue: 'Routine Photovoltaic Calibration',
-      assignedEngineer: 'Elena Rostova',
+      issue: 'Bypass Diode Thermal Calibration',
+      assignedEngineer: 'Dr. Marcus Vance',
       status: 'Scheduled',
       scheduledDate: new Date().toISOString().split('T')[0],
-      priority: 'Medium',
-      notes: ''
+      priority: 'High',
+      notes: 'Perform thermal camera inspection and clear anti-reflective glass accumulation.'
     });
     setModalOpen(true);
   };
@@ -75,307 +80,400 @@ const MaintenancePage = () => {
       issue: ticket.issue,
       assignedEngineer: ticket.assignedEngineer,
       status: ticket.status,
-      scheduledDate: ticket.scheduledDate,
+      scheduledDate: ticket.scheduledDate ? ticket.scheduledDate.split('T')[0] : new Date().toISOString().split('T')[0],
       priority: ticket.priority || 'Medium',
       notes: ticket.notes || ''
     });
     setModalOpen(true);
   };
 
-  const handleSaveTicket = async (e) => {
+  const handleSubmitModal = async (e) => {
     e.preventDefault();
     try {
       if (editingTicket) {
-        await updateMaintenanceApi(editingTicket._id, formData);
-        setToast({ message: 'Maintenance ticket updated.', type: 'success' });
+        await updateMaintenanceApi(editingTicket._id || editingTicket.id, formData);
+        setToast({ message: 'Work order updated successfully.', type: 'success' });
       } else {
         await createMaintenanceApi(formData);
-        setToast({ message: 'New maintenance ticket created!', type: 'success' });
+        setToast({ message: 'New maintenance task scheduled.', type: 'success' });
       }
       setModalOpen(false);
       loadMaintenance();
     } catch (err) {
-      setToast({ message: 'Failed to save maintenance record.', type: 'error' });
+      setToast({ message: 'Failed to save maintenance ticket.', type: 'error' });
     }
   };
 
-  const handleDeleteTicket = async (id) => {
-    if (window.confirm('Are you sure you want to delete this maintenance record?')) {
-      try {
-        await deleteMaintenanceApi(id);
-        setToast({ message: 'Maintenance ticket deleted.', type: 'info' });
-        loadMaintenance();
-      } catch (err) {
-        setToast({ message: 'Failed to delete record.', type: 'error' });
-      }
-    }
-  };
-
-  const handleQuickStatusChange = async (id, status) => {
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this work order?')) return;
     try {
-      await updateMaintenanceApi(id, { status });
-      setToast({ message: `Status updated to ${status}`, type: 'success' });
+      await deleteMaintenanceApi(id);
+      setToast({ message: 'Work order cancelled.', type: 'success' });
       loadMaintenance();
     } catch (err) {
-      setToast({ message: 'Status update failed.', type: 'error' });
+      setToast({ message: 'Failed to delete ticket.', type: 'error' });
     }
   };
 
-  const statusBadge = (status) => {
-    switch (status) {
-      case 'Completed':
+  const scheduledCount = tickets.filter((t) => t.status === 'Scheduled').length;
+  const inProgressCount = tickets.filter((t) => t.status === 'In Progress').length;
+  const completedCount = tickets.filter((t) => t.status === 'Completed').length;
+
+  const getPriorityBadge = (priority) => {
+    switch (priority) {
+      case 'High':
+      case 'Urgent':
         return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+            High Priority
           </span>
         );
-      case 'In Progress':
+      case 'Medium':
         return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-skyAccent-400/15 text-skyAccent-400 border border-skyAccent-400/30 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" /> In Progress
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-copper-500/10 text-copper-600 border border-copper-500/20">
+            Medium
           </span>
         );
-      case 'Scheduled':
       default:
         return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5" /> Scheduled
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-forest-500/10 text-forest-500 border border-forest-500/20">
+            Normal
           </span>
         );
     }
   };
 
+  // Simple Month Calendar Grid Generator
+  const calendarDays = Array.from({ length: 31 }, (_, i) => i + 1);
+
   return (
-    <div className="flex min-h-screen bg-lightBg dark:bg-navy-950 transition-colors">
+    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
-            <span className="text-xs font-bold text-solar-500 uppercase tracking-wider">Field Operations</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-              Solar Panel Maintenance Management
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+              Preventative Maintenance & Field Work Orders
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Dispatch field engineers, track component repairs, and resolve technical issues
+            <p className="text-xs text-secondaryText mt-0.5">
+              Schedule array wash cycles, inverter servicing, and field engineer work orders
             </p>
           </div>
 
-          <button
-            onClick={handleOpenAddModal}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-solar-500 to-solar-600 hover:from-solar-600 hover:to-solar-700 text-white font-bold text-xs shadow-lg shadow-solar-500/25 transition-all hover:scale-105"
-          >
-            <Plus className="w-4 h-4" /> Add Maintenance Ticket
-          </button>
+          <div className="flex items-center gap-3">
+            {/* View Mode Switcher */}
+            <div className="flex items-center p-1 bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] rounded-xl">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-forest-500 text-white'
+                    : 'text-secondaryText hover:text-primaryText'
+                }`}
+              >
+                <ListIcon className="w-3.5 h-3.5" />
+                <span>Work Orders</span>
+              </button>
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                  viewMode === 'calendar'
+                    ? 'bg-forest-500 text-white'
+                    : 'text-secondaryText hover:text-primaryText'
+                }`}
+              >
+                <CalendarIcon className="w-3.5 h-3.5" />
+                <span>Calendar View</span>
+              </button>
+            </div>
+
+            <button
+              onClick={handleOpenAddModal}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs transition-colors shadow-subtle"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Schedule Task</span>
+            </button>
+          </div>
         </div>
 
-        {/* Maintenance Table */}
-        <div className="glass-panel rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden">
-          <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-            <h3 className="text-base font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-solar-500" /> Active Maintenance Schedule
-            </h3>
-            <span className="text-xs font-semibold text-slate-500">
-              Total Records: {tickets.length}
-            </span>
+        {/* Metrics Ribbon */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="saas-card p-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-secondaryText block">Scheduled Tasks</span>
+              <span className="text-2xl font-bold text-copper-600">{scheduledCount}</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-copper-500/10 flex items-center justify-center text-copper-600">
+              <Clock className="w-4 h-4" />
+            </div>
           </div>
 
-          {loading ? (
-            <div className="py-20 text-center text-slate-400">Loading maintenance schedule...</div>
-          ) : tickets.length === 0 ? (
-            <div className="p-12 text-center text-slate-500">No maintenance tickets found.</div>
-          ) : (
+          <div className="saas-card p-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-secondaryText block">In Progress</span>
+              <span className="text-2xl font-bold text-amber-600">{inProgressCount}</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+              <Wrench className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="saas-card p-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-secondaryText block">Completed (This Month)</span>
+              <span className="text-2xl font-bold text-forest-500">{completedCount}</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-forest-500/10 flex items-center justify-center text-forest-500">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main View Area */}
+        {loading ? (
+          <div className="py-12 text-center text-secondaryText text-xs font-semibold">
+            Loading maintenance schedule...
+          </div>
+        ) : viewMode === 'calendar' ? (
+          /* CALENDAR VIEW */
+          <div className="saas-card p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                August 2026 Scheduled Maintenance Grid
+              </h3>
+              <div className="flex items-center gap-2 text-xs text-secondaryText">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-forest-500"></span> Completed
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-copper-500"></span> Scheduled
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2 text-center text-xs">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                <div key={d} className="py-1.5 font-bold text-secondaryText uppercase tracking-wider text-[10px]">
+                  {d}
+                </div>
+              ))}
+
+              {calendarDays.map((day) => {
+                const dayTickets = tickets.filter((t) => {
+                  const dNum = t.scheduledDate ? new Date(t.scheduledDate).getDate() : 0;
+                  return dNum === day;
+                });
+
+                return (
+                  <div
+                    key={day}
+                    className="min-h-[72px] p-1.5 rounded-xl bg-slate-50 dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] text-left flex flex-col justify-between"
+                  >
+                    <span className="text-[10px] font-bold text-secondaryText">{day}</span>
+                    <div className="space-y-1">
+                      {dayTickets.map((t) => (
+                        <div
+                          key={t._id || t.id}
+                          className={`p-1 rounded text-[10px] truncate font-medium ${
+                            t.status === 'Completed'
+                              ? 'bg-forest-500/15 text-forest-500'
+                              : 'bg-copper-500/15 text-copper-600'
+                          }`}
+                          title={`${t.panelId}: ${t.issue}`}
+                        >
+                          {t.panelId}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* WORK ORDERS LIST VIEW */
+          <div className="saas-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100/70 dark:bg-navy-900/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-white/10">
+                <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold sticky top-0">
                   <tr>
-                    <th className="px-6 py-4">Ticket ID & Panel</th>
-                    <th className="px-6 py-4">Issue Description</th>
-                    <th className="px-6 py-4">Assigned Engineer</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Scheduled Date</th>
-                    <th className="px-6 py-4">Completed Date</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="py-3 px-4">Work Order</th>
+                    <th className="py-3 px-4">Panel ID</th>
+                    <th className="py-3 px-4">Assigned Engineer</th>
+                    <th className="py-3 px-4">Scheduled Date</th>
+                    <th className="py-3 px-4">Priority</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-                  {tickets.map((t) => (
-                    <tr key={t._id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
-                      
-                      {/* Ticket ID & Panel */}
-                      <td className="px-6 py-4 font-bold text-navy-900 dark:text-white">
-                        <span className="text-solar-500 block">{t._id}</span>
-                        <span className="text-[11px] text-slate-500 font-medium">Panel: {t.panelId}</span>
+                <tbody className="divide-y divide-borderNeutral dark:divide-[#262626]">
+                  {tickets.length > 0 ? (
+                    tickets.map((t) => (
+                      <tr key={t._id || t.id} className="hover:bg-slate-50/60 dark:hover:bg-[#222] transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-primaryText dark:text-white">{t.issue}</div>
+                          {t.notes && <div className="text-[10px] text-secondaryText truncate max-w-xs">{t.notes}</div>}
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-primaryText dark:text-slate-200">{t.panelId}</td>
+                        <td className="py-3 px-4 text-secondaryText">
+                          <div className="flex items-center gap-1.5">
+                            <User className="w-3 h-3 text-slate-400" />
+                            <span>{t.assignedEngineer || 'Unassigned'}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-secondaryText">
+                          {t.scheduledDate ? new Date(t.scheduledDate).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="py-3 px-4">{getPriorityBadge(t.priority)}</td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                            t.status === 'Completed'
+                              ? 'bg-forest-500/10 text-forest-500'
+                              : 'bg-copper-500/10 text-copper-600'
+                          }`}>
+                            {t.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleOpenEditModal(t)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-primaryText hover:bg-slate-100 dark:hover:bg-[#2A2A2A]"
+                              title="Edit work order"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(t._id || t.id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-500/10"
+                              title="Cancel"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="py-8 text-center text-secondaryText text-xs">
+                        No maintenance work orders found.
                       </td>
-
-                      {/* Issue */}
-                      <td className="px-6 py-4 max-w-xs">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 block">{t.issue}</span>
-                        {t.notes && <span className="text-[11px] text-slate-400 block truncate">{t.notes}</span>}
-                      </td>
-
-                      {/* Engineer */}
-                      <td className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">
-                        <div className="flex items-center gap-1.5">
-                          <UserCheck className="w-4 h-4 text-skyAccent-400" />
-                          <span>{t.assignedEngineer}</span>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        {statusBadge(t.status)}
-                      </td>
-
-                      {/* Scheduled Date */}
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">
-                        {t.scheduledDate}
-                      </td>
-
-                      {/* Completed Date */}
-                      <td className="px-6 py-4 text-slate-600 dark:text-slate-400 font-medium">
-                        {t.completedDate || <span className="text-slate-400 italic">Pending</span>}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <select
-                            value={t.status}
-                            onChange={(e) => handleQuickStatusChange(t._id, e.target.value)}
-                            className="px-2 py-1 rounded bg-slate-100 dark:bg-navy-900 text-[11px] border border-slate-300 dark:border-white/10 text-slate-800 dark:text-slate-200"
-                          >
-                            <option value="Scheduled">Scheduled</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                          </select>
-
-                          <button
-                            onClick={() => handleOpenEditModal(t)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-solar-500 hover:bg-solar-500/10"
-                            title="Edit Record"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteTicket(t._id)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-500 hover:bg-rose-500/10"
-                            title="Delete Record"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
       </main>
 
-      {/* Add / Edit Maintenance Modal */}
+      {/* Work Order Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingTicket ? `Edit Maintenance Ticket ${editingTicket._id}` : 'Create Maintenance Ticket'}
+        title={editingTicket ? 'Update Work Order' : 'Schedule Preventative Maintenance Task'}
       >
-        <form onSubmit={handleSaveTicket} className="space-y-4">
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Panel ID</label>
+        <form onSubmit={handleSubmitModal} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Target Panel ID</label>
               <input
                 type="text"
+                required
                 value={formData.panelId}
                 onChange={(e) => setFormData({ ...formData, panelId: e.target.value })}
-                placeholder="SP-103"
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                required
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Assigned Engineer</label>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Scheduled Date</label>
               <input
-                type="text"
-                value={formData.assignedEngineer}
-                onChange={(e) => setFormData({ ...formData, assignedEngineer: e.target.value })}
-                placeholder="Elena Rostova"
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                type="date"
                 required
+                value={formData.scheduledDate}
+                onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Technical Issue Description</label>
+          <div>
+            <label className="block font-semibold text-secondaryText mb-1">Task Title / Issue Summary</label>
             <input
               type="text"
+              required
               value={formData.issue}
               onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-              placeholder="Thermal hotspot inspection & inverter relay test"
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-              required
+              className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status</label>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Assigned Technician</label>
+              <input
+                type="text"
+                required
+                value={formData.assignedEngineer}
+                onChange={(e) => setFormData({ ...formData, assignedEngineer: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Priority</label>
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+              >
+                <option value="Normal">Normal</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
                 <option value="Scheduled">Scheduled</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
               </select>
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Scheduled Date</label>
-              <input
-                type="date"
-                value={formData.scheduledDate}
-                onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                required
-              />
-            </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Engineering Notes</label>
+          <div>
+            <label className="block font-semibold text-secondaryText mb-1">Work Instructions & Safety Notes</label>
             <textarea
-              rows={3}
+              rows="3"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Notes on replacement parts, voltage test results..."
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-            />
+              className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+            ></textarea>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+              className="px-4 py-2 rounded-xl border border-borderNeutral dark:border-[#333] text-secondaryText hover:text-primaryText font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold rounded-xl bg-solar-500 text-white hover:bg-solar-600 shadow-md shadow-solar-500/20"
+              className="px-4 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold shadow-subtle"
             >
-              Save Ticket
+              {editingTicket ? 'Save Changes' : 'Schedule Work Order'}
             </button>
           </div>
         </form>

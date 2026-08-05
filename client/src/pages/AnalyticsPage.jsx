@@ -4,16 +4,17 @@ import StatCard from '../components/StatCard';
 import Toast from '../components/Toast';
 import { fetchPanelsApi, fetchDashboardStatsApi } from '../services/api';
 import {
-  LineChart,
+  BarChart3,
   Calendar,
   Zap,
   TrendingUp,
   Award,
   AlertTriangle,
   Sun,
-  Flame,
   Activity,
-  ChevronRight
+  Flame,
+  ArrowUpRight,
+  ShieldCheck
 } from 'lucide-react';
 
 import {
@@ -43,288 +44,288 @@ ChartJS.register(
 );
 
 const AnalyticsPage = () => {
-  const [timeframe, setTimeframe] = useState('Monthly'); // Daily, Weekly, Monthly, Yearly
-  const [panels, setPanels] = useState([]);
+  const [timeframe, setTimeframe] = useState('30d'); // 24h, 7d, 30d, YTD
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
   useEffect(() => {
-    const loadAnalytics = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchPanelsApi();
-        if (res.data.success) {
-          setPanels(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to load analytics:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadAnalytics();
-  }, []);
+    const timer = setTimeout(() => setLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, [timeframe]);
 
-  // Compute Best & Lowest Performing Panels
-  const sortedByEff = [...panels].sort((a, b) => b.efficiency - a.efficiency);
-  const bestPanel = sortedByEff[0] || { panelId: 'SP-104', efficiency: 23.5, currentOutputKW: 4.41, location: 'Ground Array West Field 1' };
-  const lowestPanel = sortedByEff[sortedByEff.length - 1] || { panelId: 'SP-103', efficiency: 14.2, currentOutputKW: 2.15, location: 'Carport East Canopy' };
+  // Color Constants
+  const colorForest = '#2E5E4E';
+  const colorOlive = '#6B8E23';
+  const colorCopper = '#B87333';
+  const colorSand = '#D8C3A5';
 
-  // Data mapping based on timeframe
-  const timeframeData = {
-    Daily: {
-      labels: ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
-      production: [3.2, 12.8, 28.4, 42.1, 39.2, 26.5, 9.8],
-      voltage: [46.2, 47.8, 48.5, 49.1, 48.9, 47.5, 46.0],
-      temp: [22.1, 28.5, 36.2, 44.0, 43.5, 38.2, 31.0],
-      efficiency: [21.8, 22.4, 22.8, 23.1, 22.9, 22.2, 21.5],
-      totalYield: '202.0 kWh'
-    },
-    Weekly: {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      production: [195, 210, 225, 205, 240, 235, 250],
-      voltage: [48.1, 48.3, 48.6, 47.9, 48.8, 48.7, 49.0],
-      temp: [38.2, 39.5, 41.0, 37.8, 42.1, 40.5, 39.0],
-      efficiency: [22.1, 22.5, 22.8, 21.9, 23.0, 22.7, 23.2],
-      totalYield: '1,560.0 kWh'
-    },
-    Monthly: {
-      labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-      production: [1850, 1980, 2100, 2040],
-      voltage: [48.2, 48.4, 48.7, 48.5],
-      temp: [37.5, 39.0, 41.2, 38.8],
-      efficiency: [22.0, 22.4, 22.9, 22.6],
-      totalYield: '7,970.0 kWh'
-    },
-    Yearly: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      production: [6200, 6800, 7900, 8400, 9200, 9800, 9600, 9400, 8300, 7500, 6400, 5900],
-      voltage: [48.0, 48.2, 48.5, 48.8, 49.0, 49.2, 48.9, 48.7, 48.4, 48.2, 48.0, 47.9],
-      temp: [28.0, 31.0, 35.0, 39.0, 43.0, 46.0, 45.0, 44.0, 39.0, 34.0, 30.0, 27.0],
-      efficiency: [21.5, 21.8, 22.2, 22.6, 22.9, 23.2, 23.0, 22.8, 22.4, 22.0, 21.6, 21.4],
-      totalYield: '94.7 MWh'
-    }
-  };
-
-  const currentTf = timeframeData[timeframe];
-
-  // Chart 1: Production Trend
-  const productionChartData = {
-    labels: currentTf.labels,
+  // Monthly Production vs Target Chart
+  const productionData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     datasets: [
       {
-        label: `Energy Production (${timeframe})`,
-        data: currentTf.production,
-        borderColor: '#2E8B57',
-        backgroundColor: 'rgba(46, 139, 87, 0.15)',
-        fill: true,
+        type: 'bar',
+        label: 'Actual Yield (MWh)',
+        data: [38, 42, 49, 56, 68, 74, 78, 71, 62, 51, 41, 36],
+        backgroundColor: colorForest,
+        borderRadius: 4
+      },
+      {
+        type: 'line',
+        label: 'Target Benchmark (MWh)',
+        data: [35, 40, 48, 55, 65, 70, 75, 70, 60, 50, 40, 35],
+        borderColor: colorOlive,
+        backgroundColor: 'transparent',
+        borderDash: [5, 5],
+        borderWidth: 2,
         tension: 0.3,
-        borderWidth: 3
+        pointRadius: 3
       }
     ]
   };
 
-  // Chart 2: Multi-Trend Comparison (Voltage, Temp, Efficiency)
-  const multiTrendData = {
-    labels: currentTf.labels,
-    datasets: [
-      {
-        label: 'Efficiency (%)',
-        data: currentTf.efficiency,
-        borderColor: '#38BDF8',
-        yAxisID: 'y1',
-        borderWidth: 3,
-        tension: 0.3
-      },
-      {
-        label: 'Temperature (°C)',
-        data: currentTf.temp,
-        borderColor: '#F43F5E',
-        borderDash: [4, 4],
-        yAxisID: 'y2',
-        borderWidth: 2,
-        tension: 0.3
-      },
-      {
-        label: 'Voltage (V)',
-        data: currentTf.voltage,
-        borderColor: '#F59E0B',
-        yAxisID: 'y2',
-        borderWidth: 2,
-        tension: 0.3
-      }
-    ]
-  };
-
-  const multiTrendOptions = {
+  const productionOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top', labels: { color: '#94a3b8' } }
+      legend: { position: 'top', align: 'end', labels: { color: '#6B7280', font: { family: 'Inter', size: 11 } } },
+      tooltip: { backgroundColor: '#1F1F1F', titleColor: '#F3F4F6', bodyColor: '#D1D5DB', padding: 10 }
     },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-      y1: {
-        type: 'linear',
-        position: 'left',
-        grid: { color: 'rgba(255,255,255,0.05)' },
-        ticks: { color: '#38BDF8' }
-      },
-      y2: {
-        type: 'linear',
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        ticks: { color: '#F43F5E' }
-      }
+      x: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
     }
   };
 
+  // Efficiency & Degradation Curve
+  const degradationData = {
+    labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6', 'Year 7', 'Year 8'],
+    datasets: [
+      {
+        label: 'Monocrystalline Fleet (%)',
+        data: [99.1, 98.6, 98.1, 97.6, 97.2, 96.7, 96.3, 95.8],
+        borderColor: colorForest,
+        backgroundColor: 'rgba(46, 94, 78, 0.08)',
+        fill: true,
+        borderWidth: 2,
+        tension: 0.2
+      },
+      {
+        label: 'Industry Degradation Limit (%)',
+        data: [98.0, 97.0, 96.0, 95.0, 94.0, 93.0, 92.0, 91.0],
+        borderColor: colorCopper,
+        borderDash: [4, 4],
+        fill: false,
+        borderWidth: 2,
+        tension: 0.2
+      }
+    ]
+  };
+
+  const degradationOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', align: 'end', labels: { color: '#6B7280', font: { family: 'Inter', size: 11 } } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { size: 10 } } },
+      y: { min: 90, max: 100, grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
+    }
+  };
+
+  // 7 Days x 8 Sampling Hours Performance Heatmap Grid Data
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const timeSlots = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+  const heatmapData = [
+    [10, 45, 82, 98, 94, 76, 32, 5],
+    [12, 48, 85, 96, 92, 74, 30, 4],
+    [8,  35, 70, 88, 84, 62, 25, 2],
+    [11, 46, 84, 99, 95, 78, 34, 5],
+    [13, 50, 88, 97, 93, 75, 31, 4],
+    [10, 42, 80, 95, 90, 72, 28, 3],
+    [9,  40, 78, 94, 88, 68, 26, 3]
+  ];
+
+  const getHeatmapColor = (val) => {
+    if (val > 90) return 'bg-forest-500 text-white font-bold';
+    if (val > 70) return 'bg-forest-500/70 text-white font-semibold';
+    if (val > 40) return 'bg-olive-500/40 text-primaryText dark:text-white font-medium';
+    if (val > 20) return 'bg-sand-400/30 text-secondaryText';
+    return 'bg-slate-100 dark:bg-neutral-800 text-slate-400';
+  };
+
   return (
-    <div className="flex min-h-screen bg-lightBg dark:bg-navy-950 transition-colors">
+    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
-            <span className="text-xs font-bold text-skyAccent-400 uppercase tracking-wider">Performance Intelligence</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-              Photovoltaic Analytics & Yield Trends
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+              Executive Solar Analytics & Performance Ratio
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Multi-timeframe degradation tracking, thermal correlation, and outlier benchmarking
+            <p className="text-xs text-secondaryText mt-0.5">
+              Deep-dive operational efficiency metrics, thermal loss correlation, and asset degradation
             </p>
           </div>
 
-          {/* Timeframe selector tabs */}
-          <div className="flex items-center gap-1.5 p-1.5 rounded-2xl glass-panel border border-slate-200 dark:border-white/10">
-            {['Daily', 'Weekly', 'Monthly', 'Yearly'].map((tf) => (
+          <div className="flex items-center gap-2 bg-white dark:bg-[#1A1A1A] p-1 rounded-xl border border-borderNeutral dark:border-[#262626]">
+            {['24h', '7d', '30d', 'YTD'].map((t) => (
               <button
-                key={tf}
-                onClick={() => setTimeframe(tf)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  timeframe === tf
-                    ? 'bg-gradient-to-r from-solar-500 to-skyAccent-500 text-white shadow-md'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                key={t}
+                onClick={() => setTimeframe(t)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-colors ${
+                  timeframe === t
+                    ? 'bg-forest-500 text-white'
+                    : 'text-secondaryText hover:text-primaryText'
                 }`}
               >
-                {tf}
+                {t}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Highlights: Best vs Lowest Performing Panel Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 4 Executive Performance Trend Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Performance Ratio (PR)"
+            value="84.6%"
+            unit="PR"
+            icon={Award}
+            trend="up"
+            trendValue="+1.2% benchmark"
+            subtext="IEC 61724 Standard"
+          />
+          <StatCard
+            title="Inverter Efficiency"
+            value="98.2%"
+            unit="ETA"
+            icon={Zap}
+            trend="neutral"
+            trendValue="Nominal 98.5%"
+            subtext="3-Phase String Inverter"
+          />
+          <StatCard
+            title="Degradation Rate"
+            value="-0.42%"
+            unit="/ Year"
+            icon={TrendingUp}
+            trend="up"
+            trendValue="Optimal (<0.5%)"
+            subtext="25-Yr Linear Guarantee"
+          />
+          <StatCard
+            title="Specific Energy Yield"
+            value="1,480"
+            unit="kWh/kWp"
+            icon={Sun}
+            trend="up"
+            trendValue="+4.5% vs Last Year"
+            subtext="Annual Cumulative"
+          />
+        </div>
+
+        {/* Deep Dive Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Best Performing Panel */}
-          <div className="glass-panel p-6 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 relative overflow-hidden flex flex-col justify-between space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-bold">
-                  <Award className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    ★ Best Performing Panel
-                  </span>
-                  <h3 className="text-xl font-extrabold text-navy-900 dark:text-white">
-                    {bestPanel.panelId}
-                  </h3>
-                </div>
+          {/* Monthly Production vs Target */}
+          <div className="saas-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                  Monthly Energy Yield vs Target Benchmark
+                </h3>
+                <p className="text-[11px] text-secondaryText">
+                  Comparative analysis of actual generation against meteorological forecast models
+                </p>
               </div>
-              <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500 text-white">
-                {bestPanel.efficiency}% Efficiency
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest-500/10 text-forest-500">
+                Monthly MWh
               </span>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-white/40 dark:bg-navy-900/40 border border-emerald-500/20">
-                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Peak Power Output</span>
-                <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">{bestPanel.currentOutputKW} kW</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/40 dark:bg-navy-900/40 border border-emerald-500/20">
-                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Location Field</span>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">{bestPanel.location}</span>
-              </div>
+            <div className="h-64">
+              <Bar data={productionData} options={productionOptions} />
             </div>
           </div>
 
-          {/* Lowest Performing Panel */}
-          <div className="glass-panel p-6 rounded-3xl border border-amber-500/30 bg-amber-500/5 relative overflow-hidden flex flex-col justify-between space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold">
-                  <AlertTriangle className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    ⚠️ Lowest Performing Panel
-                  </span>
-                  <h3 className="text-xl font-extrabold text-navy-900 dark:text-white">
-                    {lowestPanel.panelId}
-                  </h3>
-                </div>
+          {/* Degradation & Efficiency Curve */}
+          <div className="saas-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                  Photovoltaic Module Degradation Curve
+                </h3>
+                <p className="text-[11px] text-secondaryText">
+                  Multi-year power retention trajectory benchmarked against manufacturer guarantee
+                </p>
               </div>
-              <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-500 text-white">
-                {lowestPanel.efficiency}% Efficiency
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-copper-500/10 text-copper-600">
+                Retention %
               </span>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-white/40 dark:bg-navy-900/40 border border-amber-500/20">
-                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Reduced Power Output</span>
-                <span className="text-base font-bold text-amber-600 dark:text-amber-400">{lowestPanel.currentOutputKW} kW</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/40 dark:bg-navy-900/40 border border-amber-500/20">
-                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Location Field</span>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">{lowestPanel.location}</span>
-              </div>
+            <div className="h-64">
+              <Line data={degradationData} options={degradationOptions} />
             </div>
           </div>
 
         </div>
 
-        {/* Section: Selected Timeframe Analytics Summary */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-6">
+        {/* Performance Heatmap Grid */}
+        <div className="saas-card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                {timeframe} Photovoltaic Production Curve
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Aggregated yield output: <span className="font-bold text-solar-500">{currentTf.totalYield}</span>
+              <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                Diurnal Generation Heatmap Grid (7 Days × Diurnal Windows)
+              </h3>
+              <p className="text-[11px] text-secondaryText">
+                Photovoltaic output intensity (%) mapped by day of week and 2-hour diurnal solar windows
               </p>
             </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-solar-500/10 text-solar-500">
-              {timeframe} Sampling
-            </span>
-          </div>
 
-          <div className="h-72">
-            <Line data={productionChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-          </div>
-        </div>
-
-        {/* Section: Multi-Trend Graph (Voltage, Temp, Efficiency) */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white">
-                Cell Temperature vs Terminal Voltage vs Efficiency Correlation
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Cross-telemetry trend analysis showing inverse temperature degradation coefficient
-              </p>
+            <div className="flex items-center gap-3 text-[11px] text-secondaryText">
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded bg-slate-200 dark:bg-neutral-800"></span> Low (&lt;20%)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded bg-olive-500/40"></span> Moderate (40-70%)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded bg-forest-500"></span> Peak (&gt;90%)
+              </span>
             </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-skyAccent-400/10 text-skyAccent-400">
-              Multi-Axis Graph
-            </span>
           </div>
 
-          <div className="h-80">
-            <Line data={multiTrendData} options={multiTrendOptions} />
+          <div className="overflow-x-auto rounded-xl border border-borderNeutral dark:border-[#262626]">
+            <table className="w-full text-center text-xs">
+              <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold">
+                <tr>
+                  <th className="py-2.5 px-3 text-left">Day / Slot</th>
+                  {timeSlots.map((slot) => (
+                    <th key={slot} className="py-2.5 px-3">{slot}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-borderNeutral dark:divide-[#262626]">
+                {days.map((day, dIdx) => (
+                  <tr key={day}>
+                    <td className="py-2.5 px-3 font-semibold text-left text-primaryText dark:text-white bg-slate-50/50 dark:bg-[#181818]">
+                      {day}
+                    </td>
+                    {heatmapData[dIdx].map((val, tIdx) => (
+                      <td key={tIdx} className="py-2.5 px-2">
+                        <div className={`py-1.5 rounded-lg text-[11px] ${getHeatmapColor(val)}`}>
+                          {val}%
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 

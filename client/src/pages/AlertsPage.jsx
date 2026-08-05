@@ -10,12 +10,15 @@ import {
   Clock,
   Flame,
   ZapOff,
-  Cpu,
   Wrench,
   Filter,
   Plus,
   ShieldAlert,
-  Info
+  Info,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Check
 } from 'lucide-react';
 
 const AlertsPage = () => {
@@ -23,14 +26,15 @@ const AlertsPage = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('All');
   const [severityFilter, setSeverityFilter] = useState('All');
+  const [expandedId, setExpandedId] = useState(null);
 
   // New alert modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [newAlert, setNewAlert] = useState({
     panelId: 'SP-103',
-    type: 'Overheating',
+    type: 'Thermal Hotspot',
     severity: 'Warning',
-    description: 'Thermal camera detected 58.2°C surface temperature hotspot on diode bank B.'
+    description: 'Bypass diode thermal sensor reading exceeded 56.4°C threshold under peak load.'
   });
 
   const [toast, setToast] = useState({ message: '', type: 'info' });
@@ -44,6 +48,7 @@ const AlertsPage = () => {
       }
     } catch (err) {
       console.error('Failed to load alerts:', err);
+      setToast({ message: 'Error loading system alerts.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -56,7 +61,7 @@ const AlertsPage = () => {
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       await updateAlertStatusApi(id, newStatus);
-      setToast({ message: `Alert status updated to '${newStatus}'`, type: 'success' });
+      setToast({ message: `Alert status updated to '${newStatus}'.`, type: 'success' });
       loadAlerts();
     } catch (err) {
       setToast({ message: 'Failed to update alert status.', type: 'error' });
@@ -67,91 +72,122 @@ const AlertsPage = () => {
     e.preventDefault();
     try {
       await createAlertApi(newAlert);
-      setToast({ message: 'Custom alert logged in safety gateway.', type: 'success' });
+      setToast({ message: 'New incident alert logged.', type: 'success' });
       setModalOpen(false);
       loadAlerts();
     } catch (err) {
-      setToast({ message: 'Failed to log alert.', type: 'error' });
+      setToast({ message: 'Failed to create alert.', type: 'error' });
     }
   };
 
-  const severityBadge = (sev) => {
-    switch (sev) {
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const getSeverityBadge = (severity) => {
+    switch (severity) {
       case 'Critical':
         return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1">
-            <Flame className="w-3.5 h-3.5" /> Critical
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+            Critical
           </span>
         );
       case 'Warning':
         return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1">
-            <AlertTriangle className="w-3.5 h-3.5" /> Warning
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-copper-500/10 text-copper-600 border border-copper-500/20">
+            Warning
           </span>
         );
       case 'Info':
+      case 'Low':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-forest-500/10 text-forest-500 border border-forest-500/20">
+            Informational
+          </span>
+        );
       default:
         return (
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-skyAccent-400/15 text-skyAccent-400 border border-skyAccent-400/30 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5" /> Info
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400">
+            {severity}
           </span>
         );
     }
   };
 
-  const alertTypeIcon = (type) => {
-    switch (type) {
-      case 'Overheating':
-        return <Flame className="w-5 h-5 text-rose-500" />;
-      case 'Low Efficiency':
-        return <AlertTriangle className="w-5 h-5 text-amber-500" />;
-      case 'Sensor Failure':
-        return <Cpu className="w-5 h-5 text-purple-400" />;
-      case 'Low Voltage':
-        return <ZapOff className="w-5 h-5 text-rose-400" />;
-      case 'Maintenance Due':
-      default:
-        return <Wrench className="w-5 h-5 text-skyAccent-400" />;
-    }
-  };
+  const activeCount = alerts.filter((a) => a.status === 'Active').length;
+  const criticalCount = alerts.filter((a) => a.severity === 'Critical').length;
+  const resolvedCount = alerts.filter((a) => a.status === 'Resolved').length;
 
   return (
-    <div className="flex min-h-screen bg-lightBg dark:bg-navy-950 transition-colors">
+    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
         
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
-            <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">Safety & Fault Center</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-              Solar Panel Anomaly Alerts
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+              Substation Telemetry Alert Center
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Real-time fault notifications for overheating, voltage drops, and sensor disconnection
+            <p className="text-xs text-secondaryText mt-0.5">
+              Automated anomaly detection, thermal hotspots, and grid synchronization fault logs
             </p>
           </div>
 
-          <button
-            onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs shadow-lg shadow-rose-500/25 transition-all hover:scale-105"
-          >
-            <Plus className="w-4 h-4" /> Log Test Alert
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs transition-colors shadow-subtle"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Log Manual Alert</span>
+            </button>
+          </div>
         </div>
 
-        {/* Filter Bar */}
-        <div className="glass-panel p-4 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-4">
-          
-          <div className="flex items-center gap-3">
-            <Filter className="w-4 h-4 text-solar-500" />
+        {/* Incident Summary Ribbon */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="saas-card p-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-secondaryText block">Active Incidents</span>
+              <span className="text-2xl font-bold text-copper-600">{activeCount}</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-copper-500/10 flex items-center justify-center text-copper-600">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="saas-card p-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-secondaryText block">Critical Alerts</span>
+              <span className="text-2xl font-bold text-rose-600">{criticalCount}</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600">
+              <Flame className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="saas-card p-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-secondaryText block">Resolved (24h)</span>
+              <span className="text-2xl font-bold text-forest-500">{resolvedCount}</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-forest-500/10 flex items-center justify-center text-forest-500">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Controls */}
+        <div className="saas-card p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500">Status:</span>
+              <span className="text-secondaryText font-medium">Status:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none"
+                className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
                 <option value="All">All Statuses</option>
                 <option value="Active">Active</option>
@@ -161,186 +197,209 @@ const AlertsPage = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500">Severity:</span>
+              <span className="text-secondaryText font-medium">Severity:</span>
               <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white focus:outline-none"
+                className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
                 <option value="All">All Severities</option>
                 <option value="Critical">Critical</option>
                 <option value="Warning">Warning</option>
-                <option value="Info">Info</option>
+                <option value="Info">Informational</option>
               </select>
             </div>
           </div>
 
-          <div className="text-xs font-bold text-slate-500">
-            Showing <span className="text-solar-500">{alerts.length}</span> Anomaly Events
-          </div>
-
+          <span className="text-secondaryText text-[11px]">
+            Showing {alerts.length} event records
+          </span>
         </div>
 
-        {/* Alerts Cards Grid */}
+        {/* Timeline Layout */}
         {loading ? (
-          <div className="py-20 text-center text-slate-400">Loading alerts...</div>
+          <div className="py-12 text-center text-secondaryText text-xs font-semibold">
+            Loading telemetry alerts...
+          </div>
         ) : alerts.length === 0 ? (
-          <div className="glass-panel p-12 text-center rounded-3xl space-y-3">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">All Solar Systems Operating Normally</h3>
-            <p className="text-xs text-slate-500">No active thermal or electrical alerts match your filter.</p>
+          <div className="saas-card p-12 text-center text-secondaryText text-xs">
+            No incidents recorded matching the current filter criteria.
           </div>
         ) : (
-          <div className="space-y-4">
-            {alerts.map((alert) => (
-              <div
-                key={alert._id}
-                className={`glass-panel p-5 rounded-2xl glass-card border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                  alert.status === 'Active'
-                    ? 'border-rose-500/40 bg-rose-500/5'
-                    : alert.status === 'Acknowledged'
-                    ? 'border-amber-500/30 bg-amber-500/5'
-                    : 'border-slate-200 dark:border-white/10 opacity-75'
-                }`}
-              >
-                
-                {/* Left info */}
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/60 dark:bg-navy-900/80 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    {alertTypeIcon(alert.type)}
-                  </div>
+          <div className="relative border-l-2 border-borderNeutral dark:border-[#262626] ml-4 sm:ml-6 space-y-4 pl-6">
+            {alerts.map((alert) => {
+              const isExpanded = expandedId === (alert._id || alert.id);
+              const eventDate = new Date(alert.createdAt || Date.now()).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
 
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-extrabold text-navy-900 dark:text-white">
-                        {alert.type} — Panel {alert.panelId}
-                      </span>
-                      {severityBadge(alert.severity)}
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        alert.status === 'Active' ? 'bg-rose-500 text-white' : alert.status === 'Acknowledged' ? 'bg-amber-500 text-white' : 'bg-slate-500 text-white'
-                      }`}>
-                        {alert.status}
-                      </span>
+              return (
+                <div key={alert._id || alert.id} className="relative">
+                  {/* Timeline Dot Indicator */}
+                  <div className={`absolute -left-[31px] top-4 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[#121212] ${
+                    alert.severity === 'Critical' ? 'bg-rose-500' : alert.severity === 'Warning' ? 'bg-copper-500' : 'bg-forest-500'
+                  }`} />
+
+                  {/* Expandable Alert Card */}
+                  <div className="saas-card p-4 space-y-3 transition-all">
+                    
+                    <div className="flex items-start justify-between gap-3 cursor-pointer" onClick={() => toggleExpand(alert._id || alert.id)}>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-primaryText dark:text-white">
+                            {alert.panelId}: {alert.type}
+                          </span>
+                          {getSeverityBadge(alert.severity)}
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                            alert.status === 'Active'
+                              ? 'bg-rose-500/10 text-rose-600'
+                              : alert.status === 'Acknowledged'
+                              ? 'bg-amber-500/10 text-amber-600'
+                              : 'bg-forest-500/10 text-forest-500'
+                          }`}>
+                            {alert.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-secondaryText mt-1 leading-relaxed">
+                          {alert.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-slate-400 whitespace-nowrap hidden sm:inline">
+                          {eventDate}
+                        </span>
+                        <button className="p-1 rounded text-slate-400 hover:text-primaryText">
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {alert.description}
-                    </p>
+                    {/* Expandable Details Section */}
+                    {isExpanded && (
+                      <div className="pt-3 mt-3 border-t border-borderNeutral dark:border-[#262626] space-y-3 text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-warmBg dark:bg-[#202020]">
+                          <div>
+                            <span className="text-[10px] text-secondaryText block font-medium">Panel ID</span>
+                            <span className="font-semibold text-primaryText dark:text-white">{alert.panelId}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-secondaryText block font-medium">Event Type</span>
+                            <span className="font-semibold text-primaryText dark:text-white">{alert.type}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-secondaryText block font-medium">Recorded At</span>
+                            <span className="font-semibold text-primaryText dark:text-white">{eventDate}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-secondaryText block font-medium">System Status</span>
+                            <span className="font-semibold text-primaryText dark:text-white">{alert.status}</span>
+                          </div>
+                        </div>
 
-                    <div className="flex items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400 pt-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" /> Logged: {alert.timestamp}
-                      </span>
-                    </div>
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                          {alert.status !== 'Acknowledged' && alert.status !== 'Resolved' && (
+                            <button
+                              onClick={() => handleUpdateStatus(alert._id || alert.id, 'Acknowledged')}
+                              className="px-3 py-1.5 rounded-xl border border-borderNeutral dark:border-[#333] text-secondaryText hover:text-primaryText font-medium text-xs transition-colors"
+                            >
+                              Acknowledge
+                            </button>
+                          )}
+                          {alert.status !== 'Resolved' && (
+                            <button
+                              onClick={() => handleUpdateStatus(alert._id || alert.id, 'Resolved')}
+                              className="px-3 py-1.5 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs transition-colors shadow-subtle flex items-center gap-1"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Mark Resolved</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 </div>
-
-                {/* Right Action buttons */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {alert.status === 'Active' && (
-                    <button
-                      onClick={() => handleUpdateStatus(alert._id, 'Acknowledged')}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/30 transition-colors"
-                    >
-                      Acknowledge Alert
-                    </button>
-                  )}
-
-                  {alert.status !== 'Resolved' && (
-                    <button
-                      onClick={() => handleUpdateStatus(alert._id, 'Resolved')}
-                      className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all hover:scale-105"
-                    >
-                      Resolve Alert
-                    </button>
-                  )}
-
-                  {alert.status === 'Resolved' && (
-                    <span className="text-xs font-semibold text-emerald-500 flex items-center gap-1">
-                      <CheckCircle2 className="w-4 h-4" /> Resolved
-                    </span>
-                  )}
-                </div>
-
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
       </main>
 
-      {/* Log Custom Test Alert Modal */}
+      {/* Manual Alert Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Log System Alert Anomaly"
+        title="Log Substation Telemetry Incident"
       >
-        <form onSubmit={handleCreateAlert} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Target Panel ID</label>
+        <form onSubmit={handleCreateAlert} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-semibold text-secondaryText mb-1">Target Panel ID</label>
+            <input
+              type="text"
+              required
+              value={newAlert.panelId}
+              onChange={(e) => setNewAlert({ ...newAlert, panelId: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Incident Category</label>
               <input
                 type="text"
-                value={newAlert.panelId}
-                onChange={(e) => setNewAlert({ ...newAlert, panelId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
                 required
+                value={newAlert.type}
+                onChange={(e) => setNewAlert({ ...newAlert, type: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Alert Category</label>
+            <div>
+              <label className="block font-semibold text-secondaryText mb-1">Severity Level</label>
               <select
-                value={newAlert.type}
-                onChange={(e) => setNewAlert({ ...newAlert, type: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                value={newAlert.severity}
+                onChange={(e) => setNewAlert({ ...newAlert, severity: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
-                <option value="Overheating">Overheating</option>
-                <option value="Low Efficiency">Low Efficiency</option>
-                <option value="Sensor Failure">Sensor Failure</option>
-                <option value="Maintenance Due">Maintenance Due</option>
-                <option value="Low Voltage">Low Voltage</option>
+                <option value="Critical">Critical</option>
+                <option value="Warning">Warning</option>
+                <option value="Info">Informational</option>
               </select>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Severity Tier</label>
-            <select
-              value={newAlert.severity}
-              onChange={(e) => setNewAlert({ ...newAlert, severity: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-            >
-              <option value="Critical">Critical</option>
-              <option value="Warning">Warning</option>
-              <option value="Info">Info</option>
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Alert Diagnostic Description</label>
+          <div>
+            <label className="block font-semibold text-secondaryText mb-1">Incident Details & Observations</label>
             <textarea
-              rows={3}
+              rows="3"
+              required
               value={newAlert.description}
               onChange={(e) => setNewAlert({ ...newAlert, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-              required
-            />
+              className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+            ></textarea>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300"
+              className="px-4 py-2 rounded-xl border border-borderNeutral dark:border-[#333] text-secondaryText hover:text-primaryText font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold rounded-xl bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/20"
+              className="px-4 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold shadow-subtle"
             >
-              Trigger Alert Event
+              Submit Alert
             </button>
           </div>
         </form>

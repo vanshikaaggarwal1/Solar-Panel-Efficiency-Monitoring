@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { updateProfileApi, changePasswordApi } from '../services/api';
 import {
   User,
@@ -10,81 +11,77 @@ import {
   Shield,
   Phone,
   MapPin,
-  Calendar,
   Lock,
   LogOut,
   Save,
-  KeyRound,
+  Key,
+  Bell,
+  Sliders,
   CheckCircle2,
-  BellRing
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const ProfilePage = () => {
   const { user, logout, updateUserProfile } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'preferences' | 'security' | 'api'
+
   // Profile Form State
-  const [name, setName] = useState(user?.name || 'Alex Vance');
-  const [phone, setPhone] = useState(user?.phone || '+1 (555) 234-5678');
-  const [location, setLocation] = useState(user?.location || 'San Francisco Solar Tech Hub');
+  const [name, setName] = useState(user?.name || 'Alexander Vance');
+  const [phone, setPhone] = useState(user?.phone || '+1 (555) 019-2834');
+  const [location, setLocation] = useState(user?.location || 'Bay Area Telemetry Hub Sector 4');
   const [notificationsEnabled, setNotificationsEnabled] = useState(user?.notificationsEnabled !== false);
 
-  // Change Password Form State
+  // Preferences State
+  const [tempUnit, setTempUnit] = useState('C'); // C or F
+  const [refreshInterval, setRefreshInterval] = useState('8s');
+
+  // Password State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingPass, setSavingPass] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    setSavingProfile(true);
+    setSaving(true);
     try {
       const res = await updateProfileApi({ name, phone, location, notificationsEnabled });
       if (res.data.success) {
         updateUserProfile(res.data.user);
-        setToast({ message: 'Profile information updated successfully!', type: 'success' });
+        setToast({ message: 'Operator settings updated successfully.', type: 'success' });
       }
     } catch (err) {
       setToast({ message: 'Failed to update profile.', type: 'error' });
-    } finally {
-      setSavingProfile(false);
+    } font: {
+      setSaving(false);
     }
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (!currentPassword || !newPassword) {
-      setToast({ message: 'Please enter both current and new passwords.', type: 'error' });
-      return;
-    }
-
     if (newPassword !== confirmPassword) {
-      setToast({ message: 'New password and confirmation do not match.', type: 'error' });
+      setToast({ message: 'New passwords do not match.', type: 'error' });
       return;
     }
-
-    if (newPassword.length < 6) {
-      setToast({ message: 'New password must be at least 6 characters long.', type: 'error' });
-      return;
-    }
-
-    setSavingPass(true);
+    setSaving(true);
     try {
       const res = await changePasswordApi({ currentPassword, newPassword });
       if (res.data.success) {
-        setToast({ message: 'Password updated successfully!', type: 'success' });
+        setToast({ message: 'Security credentials updated.', type: 'success' });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to change password. Check current password.';
-      setToast({ message: msg, type: 'error' });
+      setToast({ message: err.response?.data?.error || 'Failed to update password.', type: 'error' });
     } finally {
-      setSavingPass(false);
+      setSaving(false);
     }
   };
 
@@ -94,201 +91,261 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-lightBg dark:bg-navy-950 transition-colors">
+    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
         
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
-            <span className="text-xs font-bold text-solar-500 uppercase tracking-wider">Account Settings</span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-              Operator Profile & Credentials
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+              System Settings & Operator Profile
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Manage personal details, notification preferences, and security passcodes
+            <p className="text-xs text-secondaryText mt-0.5">
+              Manage security credentials, telemetry refresh preferences, and notification webhooks
             </p>
           </div>
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25 text-xs font-bold transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-rose-500/20 text-rose-600 hover:bg-rose-500/10 font-semibold text-xs transition-colors self-start sm:self-auto"
           >
-            <LogOut className="w-4 h-4" /> Sign Out of Console
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
           </button>
         </div>
 
-        {/* Two Column Layout: Profile Card & Password Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column: User Badge Info */}
-          <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-6 text-center">
-            
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-solar-500 to-skyAccent-400 p-1 mx-auto shadow-xl shadow-solar-500/20">
-              <div className="w-full h-full rounded-full bg-navy-900 flex items-center justify-center text-3xl font-extrabold text-white">
-                {user?.name ? user.name.substring(0, 2).toUpperCase() : 'AV'}
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 border-b border-borderNeutral dark:border-[#262626] text-xs">
+          {[
+            { id: 'profile', label: 'Operator Details', icon: User },
+            { id: 'preferences', label: 'System Preferences', icon: Sliders },
+            { id: 'security', label: 'Security & Auth', icon: Shield },
+            { id: 'api', label: 'API Keys & Webhooks', icon: Key }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 font-semibold transition-colors border-b-2 ${
+                  isActive
+                    ? 'border-forest-500 text-forest-500'
+                    : 'border-transparent text-secondaryText hover:text-primaryText'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* TAB 1: OPERATOR DETAILS */}
+        {activeTab === 'profile' && (
+          <div className="saas-card p-6 max-w-2xl space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-forest-500 text-white flex items-center justify-center text-xl font-bold shadow-subtle">
+                {name ? name.substring(0, 2).toUpperCase() : 'AV'}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-primaryText dark:text-white">{name}</h3>
+                <p className="text-xs text-secondaryText">{user?.email || 'operator@solarix.energy'} • {user?.role || 'Lead Telemetry Engineer'}</p>
               </div>
             </div>
 
-            <div>
-              <h2 className="text-xl font-extrabold text-navy-900 dark:text-white">
-                {user?.name || 'Alex Vance'}
-              </h2>
-              <span className="text-xs font-semibold text-solar-500 block mt-0.5">
-                {user?.role || 'Administrator'}
-              </span>
-              <span className="text-[11px] text-slate-400 block">{user?.email || 'admin@solar.com'}</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-100/60 dark:bg-navy-900/60 text-left space-y-2 text-xs border border-slate-200/50 dark:border-white/5">
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                <MapPin className="w-4 h-4 text-solar-500 flex-shrink-0" />
-                <span className="truncate">{user?.location || 'San Francisco Solar Tech Hub'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                <Phone className="w-4 h-4 text-skyAccent-400 flex-shrink-0" />
-                <span>{user?.phone || '+91 0123456789'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                <Calendar className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                <span>Member Since: {user?.joinedDate || '2024-01-15'}</span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right Column: Edit Profile & Change Password Forms */}
-          <div className="lg:col-span-2 space-y-8">
-            
-            {/* Edit Profile Form */}
-            <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
-                <h3 className="text-base font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-solar-500" /> Edit Operator Information
-                </h3>
+            <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-secondaryText mb-1">Full Operator Name</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
               </div>
 
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                      required
-                    />
-                  </div>
+              <div>
+                <label className="block font-semibold text-secondaryText mb-1">Work Email Address (Read-only)</label>
+                <input
+                  type="email"
+                  disabled
+                  value={user?.email || 'operator@solarix.energy'}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] text-secondaryText cursor-not-allowed"
+                />
+              </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Phone Contact</label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-secondaryText mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                  />
                 </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Substation Location</label>
+                <div>
+                  <label className="block font-semibold text-secondaryText mb-1">Substation Location</label>
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
                   />
                 </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100/50 dark:bg-navy-900/50 border border-slate-200/50 dark:border-white/5 text-xs">
-                  <div className="flex items-center gap-2">
-                    <BellRing className="w-4 h-4 text-skyAccent-400" />
-                    <div>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 block">Telemetry Anomaly Alerts</span>
-                      <span className="text-[11px] text-slate-400">Receive instant push notifications for panel overheating</span>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notificationsEnabled}
-                    onChange={(e) => setNotificationsEnabled(e.target.checked)}
-                    className="w-4 h-4 text-solar-500 rounded border-slate-300 focus:ring-solar-500"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={savingProfile}
-                  className="px-6 py-2.5 rounded-xl bg-solar-500 hover:bg-solar-600 text-white font-bold text-xs shadow-md shadow-solar-500/20 flex items-center gap-2 transition-all hover:scale-[1.02]"
-                >
-                  <Save className="w-4 h-4" /> Save Profile Details
-                </button>
-              </form>
-            </div>
-
-            {/* Change Password Form */}
-            <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
-                <h3 className="text-base font-bold text-navy-900 dark:text-white flex items-center gap-2">
-                  <KeyRound className="w-5 h-5 text-amber-500" /> Change Security Password
-                </h3>
               </div>
 
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Current Password</label>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">New Password</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="At least 6 characters"
-                      className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-type new password"
-                      className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-100 dark:bg-navy-900 border border-slate-300 dark:border-white/10 text-slate-900 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
+              <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  disabled={savingPass}
-                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all hover:scale-[1.02]"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle transition-colors"
                 >
-                  <Lock className="w-4 h-4" /> Update Password
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Operator Profile</span>
                 </button>
-              </form>
-            </div>
-
+              </div>
+            </form>
           </div>
+        )}
 
-        </div>
+        {/* TAB 2: SYSTEM PREFERENCES */}
+        {activeTab === 'preferences' && (
+          <div className="saas-card p-6 max-w-2xl space-y-6 text-xs">
+            <h3 className="text-sm font-bold text-primaryText dark:text-white">Workspace Configuration</h3>
+
+            <div className="space-y-4">
+              {/* Theme Preference */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626]">
+                <div>
+                  <span className="font-semibold text-primaryText dark:text-white block">Appearance Mode</span>
+                  <span className="text-[11px] text-secondaryText">Choose between warm light neutral or high-contrast dark theme</span>
+                </div>
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#333] font-semibold text-primaryText dark:text-white"
+                >
+                  {isDarkMode ? <Sun className="w-3.5 h-3.5 text-sand-400" /> : <Moon className="w-3.5 h-3.5" />}
+                  <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
+                </button>
+              </div>
+
+              {/* Temperature Unit */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626]">
+                <div>
+                  <span className="font-semibold text-primaryText dark:text-white block">Temperature Unit</span>
+                  <span className="text-[11px] text-secondaryText">Telemetry thermal readings unit</span>
+                </div>
+                <div className="flex items-center p-1 bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#333] rounded-xl font-semibold">
+                  <button
+                    onClick={() => setTempUnit('C')}
+                    className={`px-3 py-1 rounded-lg ${tempUnit === 'C' ? 'bg-forest-500 text-white' : 'text-secondaryText'}`}
+                  >
+                    °C (Celsius)
+                  </button>
+                  <button
+                    onClick={() => setTempUnit('F')}
+                    className={`px-3 py-1 rounded-lg ${tempUnit === 'F' ? 'bg-forest-500 text-white' : 'text-secondaryText'}`}
+                  >
+                    °F (Fahrenheit)
+                  </button>
+                </div>
+              </div>
+
+              {/* Polling interval */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626]">
+                <div>
+                  <span className="font-semibold text-primaryText dark:text-white block">Sensor Refresh Frequency</span>
+                  <span className="text-[11px] text-secondaryText">Substation telemetry sampling rate</span>
+                </div>
+                <select
+                  value={refreshInterval}
+                  onChange={(e) => setRefreshInterval(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#333] font-semibold text-primaryText dark:text-white"
+                >
+                  <option value="4s">4 Seconds (Real-time)</option>
+                  <option value="8s">8 Seconds (Standard)</option>
+                  <option value="15s">15 Seconds (Eco Mode)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: SECURITY & AUTH */}
+        {activeTab === 'security' && (
+          <div className="saas-card p-6 max-w-2xl space-y-6">
+            <h3 className="text-sm font-bold text-primaryText dark:text-white">Security & Password Credentials</h3>
+
+            <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-secondaryText mb-1">Current Password</label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-secondaryText mb-1">New Secure Password</label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-secondaryText mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle transition-colors"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Update Password Credentials</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* TAB 4: API KEYS */}
+        {activeTab === 'api' && (
+          <div className="saas-card p-6 max-w-2xl space-y-6 text-xs">
+            <h3 className="text-sm font-bold text-primaryText dark:text-white">Substation Telemetry API Access</h3>
+            <p className="text-secondaryText leading-relaxed">
+              Use API tokens to connect hardware IoT string combiners, Modbus gateways, and SCADA monitoring systems.
+            </p>
+
+            <div className="p-4 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626] space-y-2">
+              <span className="font-semibold text-secondaryText text-[10px] uppercase tracking-wider block">Production Telemetry Key</span>
+              <div className="flex items-center justify-between font-mono bg-white dark:bg-[#181818] p-2.5 rounded-lg border border-borderNeutral dark:border-[#333]">
+                <span className="truncate">solarix_live_pk_99e821a0f82741bc</span>
+                <span className="text-[10px] text-forest-500 font-bold px-2 py-0.5 rounded bg-forest-500/10">ACTIVE</span>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
 

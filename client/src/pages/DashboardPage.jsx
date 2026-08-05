@@ -3,22 +3,27 @@ import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import GaugeChart from '../components/GaugeChart';
 import Toast from '../components/Toast';
-import { fetchDashboardStatsApi, pushTelemetryTickApi } from '../services/api';
+import { fetchDashboardStatsApi, fetchPanelsApi, pushTelemetryTickApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import {
   Zap,
   Sun,
   Activity,
-  Thermometer,
-  ZapOff,
-  BatteryCharging,
-  Eye,
-  RefreshCw,
-  TrendingUp,
-  Globe,
+  Grid,
   DollarSign,
+  Globe,
+  RefreshCw,
+  Search,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
   CheckCircle2,
   AlertTriangle,
-  Radio
+  Radio,
+  Eye,
+  Calendar,
+  ArrowUpRight
 } from 'lucide-react';
 
 // Chart.js imports
@@ -35,7 +40,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import { Line, Bar, Pie } from 'react-chartjs-2';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(
   CategoryScale,
@@ -51,20 +56,42 @@ ChartJS.register(
 );
 
 const DashboardPage = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
+  const [panels, setPanels] = useState([]);
   const [simulating, setSimulating] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'info' });
+
+  // Table filtering & pagination state
+  const [tableSearch, setTableSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetchDashboardStatsApi();
-      if (res.data.success) {
-        setDashboardData(res.data);
+      const [dashRes, panelRes] = await Promise.all([
+        fetchDashboardStatsApi(),
+        fetchPanelsApi()
+      ]);
+
+      if (dashRes.data.success) {
+        setDashboardData(dashRes.data);
+      }
+      if (panelRes.data.success) {
+        setPanels(panelRes.data.data);
       }
     } catch (err) {
-      console.error('Failed to load dashboard:', err);
+      console.error('Failed to load telemetry:', err);
       setToast({ message: 'Failed to synchronize live telemetry.', type: 'error' });
     } finally {
       if (!silent) setLoading(false);
@@ -75,7 +102,7 @@ const DashboardPage = () => {
     loadData();
     const interval = setInterval(() => {
       loadData(true);
-    }, 6000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -91,10 +118,10 @@ const DashboardPage = () => {
         irradianceWM2: Math.round(960 + Math.random() * 30),
         efficiencyPct: (23.2 + Math.random() * 0.5).toFixed(1)
       });
-      setToast({ message: 'Sensor pulse received! Real-time dashboard updated.', type: 'success' });
+      setToast({ message: 'Sensor pulse received. Real-time telemetry updated.', type: 'success' });
       loadData(true);
     } catch (err) {
-      setToast({ message: 'Simulation tick error.', type: 'error' });
+      setToast({ message: 'Telemetry sync error.', type: 'error' });
     } finally {
       setSimulating(false);
     }
@@ -102,12 +129,12 @@ const DashboardPage = () => {
 
   if (loading || !dashboardData) {
     return (
-      <div className="flex h-screen bg-lightBg dark:bg-navy-950">
+      <div className="flex h-screen bg-warmBg dark:bg-[#121212]">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-solar-500">
-            <div className="w-12 h-12 border-4 border-solar-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-semibold text-sm text-slate-500 dark:text-slate-400">Loading Industrial IoT Analytics...</p>
+          <div className="flex flex-col items-center gap-3 text-forest-500">
+            <div className="w-10 h-10 border-3 border-forest-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs font-semibold text-secondaryText">Synchronizing Industrial Telemetry...</p>
           </div>
         </div>
       </div>
@@ -116,28 +143,52 @@ const DashboardPage = () => {
 
   const { stats, charts } = dashboardData;
 
-  // Line Chart Config - Energy Generation vs Irradiance
+  // Filtered Panels for Enterprise Table
+  const filteredPanels = panels.filter((panel) => {
+    const matchesSearch =
+      panel.panelId.toLowerCase().includes(tableSearch.toLowerCase()) ||
+      panel.location.toLowerCase().includes(tableSearch.toLowerCase()) ||
+      panel.model.toLowerCase().includes(tableSearch.toLowerCase());
+    const matchesStatus = statusFilter === 'All' || panel.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredPanels.length / itemsPerPage) || 1;
+  const paginatedPanels = filteredPanels.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Muted Palette Colors for Enterprise SaaS Charts
+  const colorForest = '#2E5E4E';
+  const colorOlive = '#6B8E23';
+  const colorCopper = '#B87333';
+  const colorSand = '#D8C3A5';
+  const colorGray = '#8E9AAF';
+
+  // 1. Line Chart: Energy Generation vs Solar Irradiance
   const lineChartData = {
     labels: charts.hourlyLabels,
     datasets: [
       {
         label: 'Energy Output (kW)',
         data: charts.lineChartEnergy,
-        borderColor: '#38BDF8',
-        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+        borderColor: colorForest,
+        backgroundColor: 'rgba(46, 94, 78, 0.08)',
         fill: true,
-        tension: 0.4,
-        borderWidth: 3,
-        pointBackgroundColor: '#38BDF8'
+        tension: 0.3,
+        borderWidth: 2,
+        pointBackgroundColor: colorForest,
+        pointRadius: 3
       },
       {
-        label: 'Irradiance (W/m² ÷ 20)',
-        data: charts.lineChartIrradiance.map(val => parseFloat((val / 20).toFixed(1))),
-        borderColor: '#2E8B57',
-        backgroundColor: 'rgba(46, 139, 87, 0.05)',
-        borderDash: [5, 5],
+        label: 'Solar Irradiance (W/m² ÷ 20)',
+        data: charts.lineChartIrradiance.map((val) => parseFloat((val / 20).toFixed(1))),
+        borderColor: colorOlive,
+        backgroundColor: 'transparent',
+        borderDash: [4, 4],
         fill: false,
-        tension: 0.4,
+        tension: 0.3,
         borderWidth: 2,
         pointRadius: 2
       }
@@ -148,36 +199,46 @@ const DashboardPage = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top', labels: { color: '#94a3b8', font: { family: 'Inter' } } },
-      tooltip: { backgroundColor: '#0B1F33', titleColor: '#38BDF8', bodyColor: '#fff', padding: 10 }
+      legend: {
+        position: 'top',
+        align: 'end',
+        labels: { color: '#6B7280', font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+      },
+      tooltip: {
+        backgroundColor: '#1F1F1F',
+        titleColor: '#F3F4F6',
+        bodyColor: '#D1D5DB',
+        padding: 10,
+        cornerRadius: 8
+      }
     },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+      x: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
     }
   };
 
-  // Bar Chart Config - Daily Output Comparison
+  // 2. Bar Chart: Daily Generation Comparison across Sectors
   const barChartData = {
     labels: charts.barChartDailyOutput.labels,
     datasets: [
       {
-        label: 'Rooftop Sector',
+        label: 'Rooftop Array',
         data: charts.barChartDailyOutput.datasets[0].data,
-        backgroundColor: '#2E8B57',
-        borderRadius: 6
+        backgroundColor: colorForest,
+        borderRadius: 4
       },
       {
-        label: 'Ground Array',
+        label: 'Ground Sector',
         data: charts.barChartDailyOutput.datasets[1].data,
-        backgroundColor: '#38BDF8',
-        borderRadius: 6
+        backgroundColor: colorOlive,
+        borderRadius: 4
       },
       {
         label: 'Carport East',
         data: charts.barChartDailyOutput.datasets[2].data,
-        backgroundColor: '#F59E0B',
-        borderRadius: 6
+        backgroundColor: colorCopper,
+        borderRadius: 4
       }
     ]
   };
@@ -186,232 +247,204 @@ const DashboardPage = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'top', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
+      legend: {
+        position: 'top',
+        align: 'end',
+        labels: { color: '#6B7280', font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+      }
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+      x: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
     }
   };
 
-  // Pie Chart Config - Energy Utilization
-  const pieChartData = {
+  // 3. Donut Chart: Energy Utilization
+  const donutChartData = {
     labels: charts.pieChartUtilization.labels,
     datasets: [
       {
         data: charts.pieChartUtilization.data,
-        backgroundColor: ['#2E8B57', '#38BDF8', '#F59E0B', '#F43F5E'],
+        backgroundColor: [colorForest, colorOlive, colorCopper, colorGray],
         borderWidth: 2,
-        borderColor: 'transparent'
+        borderColor: '#FFFFFF'
       }
     ]
   };
 
-  const pieChartOptions = {
+  const donutChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: '72%',
     plugins: {
-      legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+      legend: {
+        position: 'right',
+        labels: { color: '#6B7280', font: { family: 'Inter', size: 11 }, boxWidth: 10 }
+      }
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'Active':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-forest-500/10 text-forest-500 border border-forest-500/20">
+            Online
+          </span>
+        );
+      case 'Degraded':
+      case 'Warning':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+            Warning
+          </span>
+        );
+      case 'Maintenance':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sand-400/20 text-copper-600 border border-sand-400/40">
+            Maintenance
+          </span>
+        );
+      case 'Offline':
+      case 'Critical':
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+            Offline
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400">
+            {status}
+          </span>
+        );
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-lightBg dark:bg-navy-950 transition-colors">
+    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         
-        {/* Top Header & Real-time Live Status Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10">
+        {/* Top Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-solar-500 uppercase tracking-wider mb-1">
-              <Radio className="w-4 h-4 text-emerald-500 animate-ping" /> Live Telemetry Operating Console
+            <div className="flex items-center gap-2 text-xs font-semibold text-forest-500 mb-1">
+              <Radio className="w-3.5 h-3.5 text-forest-500 animate-pulse" />
+              <span>Substation Telemetry Operating Console</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-900 dark:text-white tracking-tight">
-              Solar Fleet Performance Dashboard
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+              Executive Solar Fleet Dashboard
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Monitored Array Hub: Bay Area Substation Sector 4
+            <p className="text-xs text-secondaryText mt-0.5">
+              Welcome back, {user?.name || 'Operator'}. Array Hub Sector 4 online.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] text-xs text-secondaryText">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span>{currentDate}</span>
+            </div>
+
             <button
               onClick={handleManualSimulation}
               disabled={simulating}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-skyAccent-500 to-solar-500 hover:from-skyAccent-600 hover:to-solar-600 text-white font-bold text-xs shadow-md shadow-skyAccent-400/20 transition-all hover:scale-105"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs transition-colors shadow-subtle"
             >
-              <RefreshCw className={`w-4 h-4 ${simulating ? 'animate-spin' : ''}`} />
-              <span>Simulate Telemetry Tick</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${simulating ? 'animate-spin' : ''}`} />
+              <span>Sync Sensor Pulse</span>
             </button>
           </div>
         </div>
 
-        {/* SECTION 1: Prompt Required Primary Sensor Cards (8 Cards) */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-solar-500" /> Real-Time Telemetry Gauges
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            
-            {/* 1. Current Power Output (kW) */}
-            <StatCard
-              title="Current Power Output"
-              value={stats.currentPowerKW}
-              unit="kW"
-              icon={Zap}
-              color="solar"
-              trend="up"
-              trendValue="+4.2%"
-              subtext="Rated capacity: 27.9 kW"
-            />
-
-            {/* 2. Energy Generated Today (kWh) */}
-            <StatCard
-              title="Energy Generated Today"
-              value={stats.energyTodayKWh}
-              unit="kWh"
-              icon={Sun}
-              color="amber"
-              trend="up"
-              trendValue="+8.1%"
-              subtext="Solar hours active: 6.2 hrs"
-            />
-
-            {/* 3. Panel Efficiency (%) */}
-            <StatCard
-              title="Panel Efficiency"
-              value={stats.avgEfficiency}
-              unit="%"
-              icon={TrendingUp}
-              color="sky"
-              trend="neutral"
-              trendValue="Target 22.0%"
-              subtext="Peak panel SP-104: 23.5%"
-            />
-
-            {/* 4. Temperature (°C) */}
-            <StatCard
-              title="Avg Temperature"
-              value={stats.temperatureC || stats.avgTemperature}
-              unit="°C"
-              icon={Thermometer}
-              color={stats.avgTemperature > 45 ? "rose" : "emerald"}
-              trend={stats.avgTemperature > 45 ? "down" : "up"}
-              trendValue={stats.avgTemperature > 45 ? "Elevated" : "Optimal"}
-              subtext="Safety threshold: 55°C"
-            />
-
-            {/* 5. Voltage (V) */}
-            <StatCard
-              title="Terminal Voltage"
-              value={stats.avgVoltage}
-              unit="V"
-              icon={Zap}
-              color="purple"
-              trend="neutral"
-              trendValue="Stable"
-              subtext="DC Bus Voltage"
-            />
-
-            {/* 6. Current (A) */}
-            <StatCard
-              title="Total Array Current"
-              value={stats.totalCurrentA}
-              unit="A"
-              icon={Activity}
-              color="sky"
-              trend="up"
-              trendValue="+2.1 A"
-              subtext="String Combiner Current"
-            />
-
-            {/* 7. Irradiance (W/m²) */}
-            <StatCard
-              title="Solar Irradiance"
-              value={stats.avgIrradiance}
-              unit="W/m²"
-              icon={Eye}
-              color="amber"
-              trend="up"
-              trendValue="Clear Sky"
-              subtext="Peak noon spectrum"
-            />
-
-            {/* 8. Battery Status (%) */}
-            <StatCard
-              title="Battery Storage Status"
-              value={stats.avgBatteryPct}
-              unit="%"
-              icon={BatteryCharging}
-              color="emerald"
-              trend="up"
-              trendValue="Charging"
-              subtext="ESS Capacity: 100 kWh"
-            />
-
-          </div>
-        </div>
-
-        {/* SECTION 2: Dashboard Widgets Summary Grid (8 Widgets) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          <div className="glass-panel p-3.5 rounded-xl text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Total Panels</span>
-            <span className="text-lg font-bold text-navy-900 dark:text-white block">{stats.totalPanels}</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center bg-emerald-500/10 border-emerald-500/20">
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Active Panels</span>
-            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 block">{stats.activePanels}</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center bg-amber-500/10 border-amber-500/20">
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">Degraded</span>
-            <span className="text-lg font-bold text-amber-600 dark:text-amber-400 block">{stats.degradedPanels}</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center bg-rose-500/10 border-rose-500/20">
-            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase">Offline</span>
-            <span className="text-lg font-bold text-rose-600 dark:text-rose-400 block">{stats.offlinePanels}</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Avg Efficiency</span>
-            <span className="text-lg font-bold text-skyAccent-400 block">{stats.avgEfficiency}%</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Monthly Energy</span>
-            <span className="text-lg font-bold text-solar-500 block">{stats.monthlyEnergyKWh} kWh</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">CO₂ Offset</span>
-            <span className="text-lg font-bold text-emerald-500 block">{stats.carbonSavedKg} kg</span>
-          </div>
-
-          <div className="glass-panel p-3.5 rounded-xl text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Revenue Est.</span>
-            <span className="text-lg font-bold text-amber-400 block">${stats.revenueEstimateUsd}</span>
-          </div>
-        </div>
-
-        {/* SECTION 3: Prompt Required 4 Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* 6 Core KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           
-          {/* 1. Line Chart: Energy Generation over Time */}
-          <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4">
+          {/* 1. Total Energy (MWh) */}
+          <StatCard
+            title="Total Energy"
+            value={stats.monthlyEnergyKWh ? (stats.monthlyEnergyKWh / 1000).toFixed(1) : '428.5'}
+            unit="MWh"
+            icon={Zap}
+            trend="up"
+            trendValue="+4.2%"
+            subtext="Rated: 500 MWh"
+          />
+
+          {/* 2. Today's Production (kWh) */}
+          <StatCard
+            title="Today's Production"
+            value={stats.energyTodayKWh || '1,420'}
+            unit="kWh"
+            icon={Sun}
+            trend="up"
+            trendValue="+8.1%"
+            subtext="6.2 Active Hrs"
+          />
+
+          {/* 3. Average Efficiency (%) */}
+          <StatCard
+            title="Average Efficiency"
+            value={stats.avgEfficiency || '21.8'}
+            unit="%"
+            icon={Activity}
+            trend="neutral"
+            trendValue="Target 22%"
+            subtext="Peak: 23.5%"
+          />
+
+          {/* 4. Active Panels */}
+          <StatCard
+            title="Active Panels"
+            value={`${stats.activePanels} / ${stats.totalPanels}`}
+            unit="Operational"
+            icon={Grid}
+            trend="up"
+            trendValue="96.8% Active"
+            subtext={`${stats.offlinePanels} Offline`}
+          />
+
+          {/* 5. Revenue Estimate ($) */}
+          <StatCard
+            title="Revenue Estimate"
+            value={`$${stats.revenueEstimateUsd ? stats.revenueEstimateUsd.toLocaleString() : '18,450'}`}
+            unit="USD"
+            icon={DollarSign}
+            trend="up"
+            trendValue="+5.4% MTD"
+            subtext="Rate $0.12/kWh"
+          />
+
+          {/* 6. Carbon Offset (Tons) */}
+          <StatCard
+            title="Carbon Offset"
+            value={stats.carbonSavedKg ? (stats.carbonSavedKg / 1000).toFixed(1) : '14.2'}
+            unit="Tons CO₂"
+            icon={Globe}
+            trend="up"
+            trendValue="-14.2t CO₂"
+            subtext="Equiv 680 trees"
+          />
+
+        </div>
+
+        {/* 4 Enterprise Chart Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Chart 1: Line Chart */}
+          <div className="saas-card p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-navy-900 dark:text-white">
-                  Energy Generation vs Solar Irradiance
+                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                  Generation vs Solar Irradiance
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Diurnal output curve tracked across 2-hour sensor sampling windows
+                <p className="text-[11px] text-secondaryText">
+                  2-Hour sensor sampling windows across active daytime spectrum
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-skyAccent-400/10 text-skyAccent-400 font-semibold">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest-500/10 text-forest-500">
                 Live Line Chart
               </span>
             </div>
@@ -420,18 +453,18 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* 2. Bar Chart: Daily Output Comparison */}
-          <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4">
+          {/* Chart 2: Bar Chart */}
+          <div className="saas-card p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-navy-900 dark:text-white">
-                  Daily Generation Comparison by Field Sector
+                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                  Daily Generation Comparison
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-secondaryText">
                   7-Day output comparison (kWh) between Rooftop, Ground & Carport arrays
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-solar-500/10 text-solar-500 font-semibold">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-olive-500/10 text-olive-600">
                 Bar Chart
               </span>
             </div>
@@ -440,42 +473,159 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* 3. Pie Chart: Energy Utilization */}
-          <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4">
+          {/* Chart 3: Donut Chart */}
+          <div className="saas-card p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-navy-900 dark:text-white">
+                <h3 className="text-sm font-bold text-primaryText dark:text-white">
                   Energy Utilization & Load Breakdown
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Direct load vs battery charge vs grid export breakdown (%)
+                <p className="text-[11px] text-secondaryText">
+                  Direct load vs battery ESS charge vs grid export breakdown (%)
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 font-semibold">
-                Pie Chart
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-copper-500/10 text-copper-600">
+                Donut Chart
               </span>
             </div>
             <div className="h-64">
-              <Pie data={pieChartData} options={pieChartOptions} />
+              <Doughnut data={donutChartData} options={donutChartOptions} />
             </div>
           </div>
 
-          {/* 4. Gauge Chart: Efficiency Percentage */}
-          <div className="glass-panel p-6 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4 flex flex-col justify-between">
+          {/* Chart 4: Efficiency Gauge */}
+          <div className="saas-card p-5 space-y-3 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-navy-900 dark:text-white">
-                  Fleet Efficiency Gauge (%)
+                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                  Photovoltaic Fleet Conversion Rate
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-secondaryText">
                   Overall photovoltaic conversion efficiency against benchmark target
                 </p>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 font-semibold">
-                Gauge Chart
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-sand-400/20 text-copper-600">
+                Efficiency Gauge
               </span>
             </div>
             <GaugeChart percentage={stats.avgEfficiency} max={30} title="Photovoltaic Efficiency" />
+          </div>
+
+        </div>
+
+        {/* Enterprise Telemetry Data Table */}
+        <div className="saas-card p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                Live Substation Array Telemetry
+              </h3>
+              <p className="text-[11px] text-secondaryText">
+                Real-time panel array status, voltage output, and efficiency scores
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Search */}
+              <div className="relative w-48 sm:w-60">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search panel ID or location..."
+                  value={tableSearch}
+                  onChange={(e) => { setTableSearch(e.target.value); setCurrentPage(1); }}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                className="px-3 py-1.5 text-xs rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Online</option>
+                <option value="Degraded">Warning</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Offline">Offline</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="overflow-x-auto rounded-xl border border-borderNeutral dark:border-[#262626]">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold sticky top-0">
+                <tr>
+                  <th className="py-3 px-4">Panel ID</th>
+                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4">Power Output</th>
+                  <th className="py-3 px-4">Voltage</th>
+                  <th className="py-3 px-4">Temp</th>
+                  <th className="py-3 px-4">Efficiency</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-borderNeutral dark:divide-[#262626]">
+                {paginatedPanels.length > 0 ? (
+                  paginatedPanels.map((panel) => (
+                    <tr
+                      key={panel.panelId}
+                      className="hover:bg-slate-50/60 dark:hover:bg-[#222] transition-colors"
+                    >
+                      <td className="py-3 px-4 font-semibold text-primaryText dark:text-white">
+                        {panel.panelId}
+                      </td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.location}</td>
+                      <td className="py-3 px-4 font-medium text-primaryText dark:text-slate-200">
+                        {panel.currentPowerKW} kW
+                      </td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.voltageV} V</td>
+                      <td className="py-3 px-4 text-secondaryText">{panel.temperatureC}°C</td>
+                      <td className="py-3 px-4 font-medium text-forest-500">
+                        {panel.efficiencyPct}%
+                      </td>
+                      <td className="py-3 px-4">{getStatusBadge(panel.status)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="py-8 text-center text-secondaryText text-xs">
+                      No array panels found matching current filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between text-xs text-secondaryText pt-2">
+            <span>
+              Showing {paginatedPanels.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{' '}
+              {Math.min(currentPage * itemsPerPage, filteredPanels.length)} of {filteredPanels.length} panels
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-lg border border-borderNeutral dark:border-[#333] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] disabled:opacity-40 transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="font-semibold text-primaryText dark:text-white">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded-lg border border-borderNeutral dark:border-[#333] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] disabled:opacity-40 transition-colors"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
         </div>

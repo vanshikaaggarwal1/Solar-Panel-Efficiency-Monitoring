@@ -1,61 +1,63 @@
 import React from 'react';
-import { Zap, ShieldCheck, Heart, Globe, Activity } from 'lucide-react';
+import { Sun, ShieldCheck, Globe, Activity } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="glass-panel border-t border-slate-200 dark:border-white/10 mt-auto transition-colors">
+    <footer className="bg-white dark:bg-[#181818] border-t border-borderNeutral dark:border-[#262626] mt-auto transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-solar-500" />
-              <span className="font-bold text-lg text-slate-900 dark:text-white">SOLARIX</span>
+              <div className="w-7 h-7 rounded-lg bg-forest-500 text-white flex items-center justify-center font-bold text-xs">
+                <Sun className="w-3.5 h-3.5 text-sand-400" />
+              </div>
+              <span className="font-bold text-base tracking-tight text-primaryText dark:text-white">SOLARIX</span>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Industrial IoT Telemetry & Solar Panel Efficiency Monitoring System. Maximizing clean energy output with AI analytics.
+            <p className="text-xs text-secondaryText leading-relaxed">
+              Industrial IoT Solar Performance & Telemetry Monitoring System. Enterprise SaaS platform for renewable energy companies.
             </p>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-primaryText dark:text-white mb-3">
               Platform Features
             </h4>
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-              <li>Real-time Telemetry Analytics</li>
-              <li>Photovoltaic Degradation Tracking</li>
-              <li>Automated Thermal Fault Detection</li>
-              <li>Maintenance Workflow Dispatch</li>
+            <ul className="space-y-2 text-xs text-secondaryText">
+              <li>Real-Time Sensor Telemetry</li>
+              <li>Photovoltaic Degradation Analytics</li>
+              <li>Automated Thermal Anomaly Center</li>
+              <li>Field Maintenance Dispatch</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-primaryText dark:text-white mb-3">
               Environmental Impact
             </h4>
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2 text-xs text-secondaryText">
               <li className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-solar-500" /> 5.9 Metric Tons CO₂ Offset
+                <Globe className="w-3.5 h-3.5 text-forest-500" /> 14.2 Metric Tons CO₂ Offset
               </li>
               <li className="flex items-center gap-2">
-                <Activity className="w-3.5 h-3.5 text-skyAccent-400" /> 22.8% Average Fleet Efficiency
+                <Activity className="w-3.5 h-3.5 text-olive-500" /> 21.8% Average Fleet Efficiency
               </li>
               <li className="flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Zero Thermal Runaway Incidents
+                <ShieldCheck className="w-3.5 h-3.5 text-forest-500" /> IEC 61724 Standard Compliant
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-3">
-              System Health
+            <h4 className="text-xs font-bold uppercase tracking-wider text-primaryText dark:text-white mb-3">
+              Substation Telemetry
             </h4>
-            <div className="p-3 rounded-xl bg-solar-500/10 border border-solar-500/20 text-xs space-y-1">
+            <div className="p-3 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626] text-xs space-y-1">
               <div className="flex justify-between font-medium">
-                <span className="text-slate-700 dark:text-slate-300">Gateway Status:</span>
-                <span className="text-solar-600 dark:text-solar-400 font-bold">ONLINE</span>
+                <span className="text-secondaryText">Gateway Status:</span>
+                <span className="text-forest-500 font-bold">ONLINE</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex justify-between text-[11px] text-secondaryText">
                 <span>Latency: 14ms</span>
                 <span>Uptime: 99.98%</span>
               </div>
@@ -64,11 +66,9 @@ const Footer = () => {
 
         </div>
 
-        <div className="border-t border-slate-200 dark:border-white/10 pt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <p>© {new Date().getFullYear()} Solarix Efficiency Monitoring System. All rights reserved.</p>
-          <p className="flex items-center gap-1 mt-2 sm:mt-0">
-            Powered by <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline" /> Renewable Solar Energy
-          </p>
+        <div className="border-t border-borderNeutral dark:border-[#262626] pt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-secondaryText">
+          <p>© {new Date().getFullYear()} Solarix Systems. Industrial Telemetry Platform.</p>
+          <p className="mt-2 sm:mt-0 font-medium">Enterprise Photovoltaic Infrastructure</p>
         </div>
       </div>
     </footer>

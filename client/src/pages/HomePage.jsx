@@ -9,24 +9,24 @@ import {
   Cpu,
   Layers,
   ArrowRight,
-  CheckCircle2,
   Zap,
   Globe,
-  Sliders
+  Sliders,
+  CheckCircle2
 } from 'lucide-react';
 
 const HomePage = () => {
   const stats = [
     { label: 'Active Fleet Panels', value: '4,850+', change: '+12% YOY', color: 'text-forest-500' },
-    { label: 'Avg System Efficiency', value: '22.8%', change: '+3.4% target gain', color: 'text-copper-500' },
-    { label: 'Clean Energy Generated', value: '1.42 GWh', change: 'Cumulative total', color: 'text-primaryText' },
-    { label: 'Carbon Offset Savings', value: '994 Tons', change: 'CO₂ emissions offset', color: 'text-olive-500' },
+    { label: 'Avg System Efficiency', value: '21.8%', change: '+3.4% target gain', color: 'text-copper-600' },
+    { label: 'Clean Energy Generated', value: '1.42 GWh', change: 'Cumulative total', color: 'text-primaryText dark:text-white' },
+    { label: 'Carbon Offset Savings', value: '994 Tons', change: 'CO₂ emissions offset', color: 'text-olive-600' },
   ];
 
   const capabilities = [
     {
       icon: Activity,
-      title: 'Real-Time Sensor Telemetry',
+      title: 'Real-Time Telemetry & Sensors',
       desc: 'High-frequency telemetry ingestion monitoring active power output (kW), voltage, current, irradiance, and thermal coefficients.'
     },
     {
@@ -46,101 +46,95 @@ const HomePage = () => {
     },
     {
       icon: Sliders,
-      title: 'Photovoltaic Benchmarks',
+      title: 'Photovoltaic Benchmarking',
       desc: 'Benchmark panel performance tolerances against rated STC capacity across rooftop, ground, and carport arrays.'
     },
     {
       icon: Layers,
-      title: 'Multi-Format Audit Export',
+      title: 'Multi-Format Compliance Export',
       desc: 'Generate compliance audit reports for daily, weekly, monthly, and annual operational reviews in PDF and CSV.'
     }
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-warmBg dark:bg-[#121212] transition-colors">
+    <div className="min-h-screen flex flex-col bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
       
       {/* Hero Section */}
-      <section className="pt-16 pb-20 border-b border-borderNeutral dark:border-[#2A2A2A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl space-y-6 text-left">
-            
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white dark:bg-[#1C1C1C] border border-borderNeutral dark:border-[#333] text-xs font-semibold text-forest-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-forest-500"></span> Solarix Enterprise Operating Platform
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primaryText dark:text-white tracking-tight leading-tight">
-              Photovoltaic Efficiency & Telemetry Analytics
-            </h1>
-
-            <p className="text-base sm:text-lg text-secondaryText font-normal leading-relaxed max-w-2xl">
-              An enterprise-grade IoT platform built for renewable energy companies, asset managers, and field engineering teams to monitor solar performance and maximize power generation yield.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-              <Link
-                to="/dashboard"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors"
-              >
-                <span>Launch Enterprise Console</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/login"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white dark:bg-[#1C1C1C] text-primaryText dark:text-white font-semibold text-xs border border-borderNeutral dark:border-[#333] hover:bg-slate-50 transition-colors flex items-center justify-center"
-              >
-                Operator Sign In
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-6 pt-4 text-xs text-secondaryText">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-forest-500" /> Enterprise JWT Security</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-forest-500" /> RESTful Telemetry Gateway</span>
-            </div>
-
-          </div>
+      <section className="px-4 sm:px-6 lg:px-8 pt-16 pb-20 max-w-7xl mx-auto space-y-12 text-center">
+        
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-forest-500/10 border border-forest-500/20 text-forest-500 font-semibold text-xs mx-auto">
+          <Sun className="w-3.5 h-3.5 text-sand-400" />
+          <span>Industrial Telemetry & Photovoltaic Intelligence</span>
         </div>
-      </section>
 
-      {/* Metrics Banner */}
-      <section className="py-12 bg-white dark:bg-[#181818] border-b border-borderNeutral dark:border-[#2A2A2A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((s, idx) => (
-              <div key={idx} className="space-y-1">
-                <span className="text-xs font-semibold text-secondaryText block">{s.label}</span>
-                <span className={`text-3xl font-bold tracking-tight ${s.color} dark:text-white block`}>{s.value}</span>
-                <span className="text-[11px] text-slate-400 block">{s.change}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Enterprise Capabilities Grid */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="max-w-2xl space-y-2">
-          <span className="text-xs font-bold text-forest-500 uppercase tracking-wider">Platform Capabilities</span>
-          <h2 className="text-3xl font-bold text-primaryText dark:text-white tracking-tight">
-            Designed for Commercial & Industrial Solar Farms
-          </h2>
-          <p className="text-xs text-secondaryText">
-            Robust telemetry monitoring, automated diagnostics, and maintenance dispatching.
+        <div className="max-w-4xl mx-auto space-y-4">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-primaryText dark:text-white leading-tight">
+            Enterprise Solar Fleet Monitoring & Telemetry Analytics
+          </h1>
+          <p className="text-base sm:text-lg text-secondaryText max-w-2xl mx-auto leading-relaxed">
+            Maximize photovoltaic generation efficiency, automate thermal anomaly detection, and streamline field work orders for utility-scale solar installations.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {capabilities.map((c, i) => {
-            const Icon = c.icon;
-            return (
-              <div key={i} className="saas-card p-6 space-y-3">
-                <div className="w-9 h-9 rounded-lg bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-forest-500 flex items-center justify-center">
-                  <Icon className="w-4 h-4" />
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            to="/dashboard"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors"
+          >
+            <span>Access Live Console</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          <Link
+            to="/login"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white hover:bg-slate-100 dark:hover:bg-[#202020] font-semibold text-xs transition-colors"
+          >
+            Operator Sign In
+          </Link>
+        </div>
+
+        {/* Fleet Performance Stat Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto pt-8">
+          {stats.map((item, idx) => (
+            <div key={idx} className="saas-card p-4 text-left">
+              <span className="text-[11px] font-semibold text-secondaryText block">{item.label}</span>
+              <span className={`text-2xl font-bold tracking-tight block my-1 ${item.color}`}>
+                {item.value}
+              </span>
+              <span className="text-[10px] text-slate-400">{item.change}</span>
+            </div>
+          ))}
+        </div>
+
+      </section>
+
+      {/* Enterprise Capabilities Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-[#181818] border-y border-borderNeutral dark:border-[#262626]">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-primaryText dark:text-white">
+              Built for Renewable Energy Enterprise Operations
+            </h2>
+            <p className="text-xs sm:text-sm text-secondaryText">
+              Industrial IoT infrastructure engineered for high-frequency telemetry processing and zero-downtime grid synchronization.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {capabilities.map((cap, idx) => {
+              const Icon = cap.icon;
+              return (
+                <div key={idx} className="p-5 rounded-2xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626] space-y-3">
+                  <div className="w-9 h-9 rounded-xl bg-forest-500/10 text-forest-500 flex items-center justify-center">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-primaryText dark:text-white">{cap.title}</h3>
+                  <p className="text-xs text-secondaryText leading-relaxed">{cap.desc}</p>
                 </div>
-                <h3 className="text-sm font-bold text-primaryText dark:text-white">{c.title}</h3>
-                <p className="text-xs text-secondaryText leading-relaxed">{c.desc}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </section>
 
