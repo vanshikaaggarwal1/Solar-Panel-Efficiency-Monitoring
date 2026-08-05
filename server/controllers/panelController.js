@@ -105,6 +105,7 @@ const createPanel = async (req, res) => {
     const isConnected = getIsConnected();
 
     const newPanelData = {
+      _id: panelId,
       panelId,
       model,
       type,
@@ -133,9 +134,8 @@ const createPanel = async (req, res) => {
       if (exists) {
         return res.status(400).json({ success: false, message: `Panel ID '${panelId}' already exists.` });
       }
-      const created = { _id: panelId, ...newPanelData };
-      getStore().solarPanels.push(created);
-      return res.status(201).json({ success: true, data: created });
+      getStore().solarPanels.push(newPanelData);
+      return res.status(201).json({ success: true, data: newPanelData });
     }
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to create solar panel: ' + err.message });

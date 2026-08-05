@@ -28,39 +28,37 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const userId = 'usr-' + Date.now();
     const newUser = {
-      _id: 'usr-' + Date.now(),
+      _id: userId,
       name,
       email,
       password: hashedPassword,
       role: 'Solar Operator',
       phone: '',
       location: 'Solar Array Station',
-      joinedDate: new Date().toISOString().split('T')[0],
       notificationsEnabled: true
     };
 
     if (isConnected) {
-      const dbUser = new User({ name, email, password: hashedPassword });
+      const dbUser = new User(newUser);
       await dbUser.save();
-      newUser._id = dbUser._id;
     } else {
       getStore().users.push(newUser);
     }
 
-    const token = jwt.sign({ id: newUser._id, email: newUser.email, name: newUser.name, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: userId, email: newUser.email, name: newUser.name, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
       success: true,
       token,
       user: {
-        id: newUser._id,
+        id: userId,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
         phone: newUser.phone,
         location: newUser.location,
-        joinedDate: newUser.joinedDate,
         notificationsEnabled: newUser.notificationsEnabled
       }
     });
@@ -104,10 +102,9 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || 'Administrator',
-        phone: user.phone || '+1 (555) 234-5678',
-        location: user.location || 'San Francisco Solar Tech Hub',
-        joinedDate: user.joinedDate || '2024-01-15',
+        role: user.role || 'Solar Operator',
+        phone: user.phone || '',
+        location: user.location || 'Solar Array Station',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
       }
     });
@@ -139,10 +136,9 @@ const getProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || 'Administrator',
-        phone: user.phone || '+1 (555) 234-5678',
-        location: user.location || 'San Francisco Solar Tech Hub',
-        joinedDate: user.joinedDate || '2024-01-15',
+        role: user.role || 'Solar Operator',
+        phone: user.phone || '',
+        location: user.location || 'Solar Array Station',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
       }
     });
@@ -187,7 +183,6 @@ const updateProfile = async (req, res) => {
           role: updated.role,
           phone: updated.phone,
           location: updated.location,
-          joinedDate: updated.joinedDate,
           notificationsEnabled: updated.notificationsEnabled
         }
       });

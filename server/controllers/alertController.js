@@ -41,7 +41,11 @@ const updateAlertStatus = async (req, res) => {
     const isConnected = getIsConnected();
 
     if (isConnected) {
-      const updated = await Alert.findByIdAndUpdate(id, { status }, { new: true });
+      const updated = await Alert.findOneAndUpdate(
+        { $or: [{ _id: id }, { _id: id }] },
+        { status },
+        { new: true }
+      );
       if (!updated) {
         return res.status(404).json({ success: false, message: 'Alert not found.' });
       }
@@ -68,7 +72,7 @@ const createAlert = async (req, res) => {
     const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const newAlert = {
-      _id: 'ALT-' + Math.floor(500 + Math.random() * 500),
+      _id: 'ALT-' + Date.now().toString().slice(-6),
       panelId: panelId || 'SP-101',
       type: type || 'Sensor Failure',
       severity: severity || 'Warning',

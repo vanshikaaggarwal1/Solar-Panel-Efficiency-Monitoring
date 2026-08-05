@@ -1,5 +1,6 @@
 const { getStore, getIsConnected } = require('../config/db');
 const Maintenance = require('../models/Maintenance');
+const SolarPanel = require('../models/SolarPanel');
 
 // Get all maintenance tickets
 const getMaintenance = async (req, res) => {
@@ -43,6 +44,12 @@ const createMaintenance = async (req, res) => {
     if (isConnected) {
       const dbRecord = new Maintenance(newRecord);
       await dbRecord.save();
+
+      // Sync panel status in MongoDB
+      if (status === 'In Progress' || status === 'Scheduled') {
+        await SolarPanel.findOneAndUpdate({ panelId }, { status: 'Maintenance' });
+      }
+
       return res.status(201).json({ success: true, data: dbRecord });
     } else {
       getStore().maintenanceRecords.unshift(newRecord);
@@ -68,10 +75,20 @@ const updateMaintenance = async (req, res) => {
     };
 
     if (isConnected) {
-      const updated = await Maintenance.findByIdAndUpdate(id, updatePayload, { new: true });
+      const updated = await Maintenance.findOneAndUpdate(
+        { $or: [{ _id: id }, { _id: id }] },
+        updatePayload,
+        { new: true }
+      );
+
       if (!updated) {
         return res.status(404).json({ success: false, message: 'Maintenance record not found.' });
       }
+
+      if (status === 'Completed') {
+        await SolarPanel.findOneAndUpdate({ panelId: updated.panelId }, { status: 'Active' });
+      }
+
       return res.json({ success: true, data: updated });
     } else {
       const index = getStore().maintenanceRecords.findIndex(m => m._id === id);
@@ -93,7 +110,7 @@ const deleteMaintenance = async (req, res) => {
     const isConnected = getIsConnected();
 
     if (isConnected) {
-      await Maintenance.findByIdAndDelete(id);
+      await Maintenance.findOneAndDelete({ $or: [{ _id: id }, { _id: id }] });
       return res.json({ success: true, message: 'Maintenance record deleted.' });
     } else {
       const index = getStore().maintenanceRecords.findIndex(m => m._id === id);

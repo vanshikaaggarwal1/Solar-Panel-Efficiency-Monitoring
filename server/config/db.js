@@ -22,16 +22,38 @@ const seedDatabaseIfEmpty = async () => {
     const Alert = require('../models/Alert');
     const Report = require('../models/Report');
 
-    const userCount = await User.countDocuments();
+    const [userCount, panelCount, sensorCount, maintCount, alertCount, reportCount] = await Promise.all([
+      User.countDocuments(),
+      SolarPanel.countDocuments(),
+      SensorData.countDocuments(),
+      Maintenance.countDocuments(),
+      Alert.countDocuments(),
+      Report.countDocuments()
+    ]);
+
     if (userCount === 0) {
-      console.log('🌱 Seeding MongoDB database with initial datasets...');
       await User.insertMany(seed.users);
+      console.log('🌱 Seeded User collection.');
+    }
+    if (panelCount === 0) {
       await SolarPanel.insertMany(seed.solarPanels);
+      console.log('🌱 Seeded SolarPanel collection.');
+    }
+    if (sensorCount === 0) {
       await SensorData.insertMany(seed.sensorData);
+      console.log('🌱 Seeded SensorData collection.');
+    }
+    if (maintCount === 0) {
       await Maintenance.insertMany(seed.maintenanceRecords);
+      console.log('🌱 Seeded Maintenance collection.');
+    }
+    if (alertCount === 0) {
       await Alert.insertMany(seed.alerts);
+      console.log('🌱 Seeded Alert collection.');
+    }
+    if (reportCount === 0) {
       await Report.insertMany(seed.reports);
-      console.log('✅ MongoDB database seeded successfully!');
+      console.log('🌱 Seeded Report collection.');
     }
   } catch (err) {
     console.error('Seeding warning:', err.message);
@@ -43,14 +65,14 @@ const connectDB = async () => {
   try {
     mongoose.set('strictQuery', false);
     await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 2000
+      serverSelectionTimeoutMS: 3000
     });
     isConnected = true;
     console.log('✅ MongoDB connected successfully to:', mongoURI);
     await seedDatabaseIfEmpty();
   } catch (err) {
     isConnected = false;
-    console.log('⚠️ MongoDB connection unavailable. Operating in high-performance seed state mode.');
+    console.log('⚠️ MongoDB connection unavailable. Operating in fallback mode.');
   }
 };
 
