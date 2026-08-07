@@ -58,7 +58,7 @@ const ReportsPage = () => {
       setToast({ message: 'Failed to generate report.', type: 'error' });
     }
   };
-
+ 
   const exportCSV = (report) => {
     const csvContent =
       'data:text/csv;charset=utf-8,' +

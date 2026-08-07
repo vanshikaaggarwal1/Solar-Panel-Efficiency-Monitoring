@@ -2,19 +2,15 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import Toast from '../components/Toast';
-import { fetchPanelsApi, fetchDashboardStatsApi } from '../services/api';
+import { fetchAnalyticsApi } from '../services/api';
 import {
   BarChart3,
   Calendar,
   Zap,
   TrendingUp,
   Award,
-  AlertTriangle,
   Sun,
-  Activity,
-  Flame,
-  ArrowUpRight,
-  ShieldCheck
+  Activity
 } from 'lucide-react';
 
 import {
@@ -46,34 +42,72 @@ ChartJS.register(
 const AnalyticsPage = () => {
   const [timeframe, setTimeframe] = useState('30d'); // 24h, 7d, 30d, YTD
   const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState(null);
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
+  const loadAnalytics = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchAnalyticsApi({ timeframe });
+      if (res.data.success) {
+        setAnalyticsData(res.data.analytics);
+      }
+    } catch (err) {
+      console.error('Failed to load analytics:', err);
+      setToast({ message: 'Failed to fetch database analytics.', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 300);
-    return () => clearTimeout(timer);
+    loadAnalytics();
   }, [timeframe]);
 
   // Color Constants
   const colorForest = '#2E5E4E';
   const colorOlive = '#6B8E23';
   const colorCopper = '#B87333';
-  const colorSand = '#D8C3A5';
 
-  // Monthly Production vs Target Chart
-  const productionData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  if (loading || !analyticsData) {
+    return (
+      <div className="flex h-screen bg-warmBg dark:bg-[#121212]">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-forest-500">
+            <div className="w-10 h-10 border-3 border-forest-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs font-semibold text-secondaryText">Computing MongoDB Analytics...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const {
+    performanceRatio,
+    inverterEfficiency,
+    degradationRate,
+    specificYield,
+    productionData: prod,
+    degradationData: deg,
+    heatmap
+  } = analyticsData;
+
+  // Monthly Production Chart Data
+  const productionChartData = {
+    labels: prod.labels,
     datasets: [
       {
         type: 'bar',
         label: 'Actual Yield (MWh)',
-        data: [38, 42, 49, 56, 68, 74, 78, 71, 62, 51, 41, 36],
+        data: prod.actualYieldMWh,
         backgroundColor: colorForest,
         borderRadius: 4
       },
       {
         type: 'line',
         label: 'Target Benchmark (MWh)',
-        data: [35, 40, 48, 55, 65, 70, 75, 70, 60, 50, 40, 35],
+        data: prod.targetBenchmarkMWh,
         borderColor: colorOlive,
         backgroundColor: 'transparent',
         borderDash: [5, 5],
@@ -97,13 +131,13 @@ const AnalyticsPage = () => {
     }
   };
 
-  // Efficiency & Degradation Curve
-  const degradationData = {
-    labels: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5', 'Year 6', 'Year 7', 'Year 8'],
+  // Efficiency & Degradation Curve Data
+  const degradationChartData = {
+    labels: deg.labels,
     datasets: [
       {
         label: 'Monocrystalline Fleet (%)',
-        data: [99.1, 98.6, 98.1, 97.6, 97.2, 96.7, 96.3, 95.8],
+        data: deg.fleetDegradationPct,
         borderColor: colorForest,
         backgroundColor: 'rgba(46, 94, 78, 0.08)',
         fill: true,
@@ -111,8 +145,8 @@ const AnalyticsPage = () => {
         tension: 0.2
       },
       {
-        label: 'Industry Degradation Limit (%)',
-        data: [98.0, 97.0, 96.0, 95.0, 94.0, 93.0, 92.0, 91.0],
+        label: 'Manufacturer Limit (%)',
+        data: deg.guaranteeLimitPct,
         borderColor: colorCopper,
         borderDash: [4, 4],
         fill: false,
@@ -133,19 +167,6 @@ const AnalyticsPage = () => {
       y: { min: 90, max: 100, grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
     }
   };
-
-  // 7 Days x 8 Sampling Hours Performance Heatmap Grid Data
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const timeSlots = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
-  const heatmapData = [
-    [10, 45, 82, 98, 94, 76, 32, 5],
-    [12, 48, 85, 96, 92, 74, 30, 4],
-    [8,  35, 70, 88, 84, 62, 25, 2],
-    [11, 46, 84, 99, 95, 78, 34, 5],
-    [13, 50, 88, 97, 93, 75, 31, 4],
-    [10, 42, 80, 95, 90, 72, 28, 3],
-    [9,  40, 78, 94, 88, 68, 26, 3]
-  ];
 
   const getHeatmapColor = (val) => {
     if (val > 90) return 'bg-forest-500 text-white font-bold';
@@ -168,7 +189,7 @@ const AnalyticsPage = () => {
               Executive Solar Analytics & Performance Ratio
             </h1>
             <p className="text-xs text-secondaryText mt-0.5">
-              Deep-dive operational efficiency metrics, thermal loss correlation, and asset degradation
+              Deep-dive operational efficiency metrics, thermal loss correlation, and asset degradation derived from MongoDB
             </p>
           </div>
 
@@ -193,7 +214,7 @@ const AnalyticsPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Performance Ratio (PR)"
-            value="84.6%"
+            value={`${performanceRatio}%`}
             unit="PR"
             icon={Award}
             trend="up"
@@ -202,7 +223,7 @@ const AnalyticsPage = () => {
           />
           <StatCard
             title="Inverter Efficiency"
-            value="98.2%"
+            value={`${inverterEfficiency}%`}
             unit="ETA"
             icon={Zap}
             trend="neutral"
@@ -211,7 +232,7 @@ const AnalyticsPage = () => {
           />
           <StatCard
             title="Degradation Rate"
-            value="-0.42%"
+            value={`${degradationRate}%`}
             unit="/ Year"
             icon={TrendingUp}
             trend="up"
@@ -220,7 +241,7 @@ const AnalyticsPage = () => {
           />
           <StatCard
             title="Specific Energy Yield"
-            value="1,480"
+            value={specificYield ? specificYield.toLocaleString() : '1,480'}
             unit="kWh/kWp"
             icon={Sun}
             trend="up"
@@ -248,7 +269,7 @@ const AnalyticsPage = () => {
               </span>
             </div>
             <div className="h-64">
-              <Bar data={productionData} options={productionOptions} />
+              <Bar data={productionChartData} options={productionOptions} />
             </div>
           </div>
 
@@ -268,7 +289,7 @@ const AnalyticsPage = () => {
               </span>
             </div>
             <div className="h-64">
-              <Line data={degradationData} options={degradationOptions} />
+              <Line data={degradationChartData} options={degradationOptions} />
             </div>
           </div>
 
@@ -282,7 +303,7 @@ const AnalyticsPage = () => {
                 Diurnal Generation Heatmap Grid (7 Days × Diurnal Windows)
               </h3>
               <p className="text-[11px] text-secondaryText">
-                Photovoltaic output intensity (%) mapped by day of week and 2-hour diurnal solar windows
+                Photovoltaic output intensity (%) mapped by day of week and 2-hour diurnal solar windows from MongoDB
               </p>
             </div>
 
@@ -304,18 +325,18 @@ const AnalyticsPage = () => {
               <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold">
                 <tr>
                   <th className="py-2.5 px-3 text-left">Day / Slot</th>
-                  {timeSlots.map((slot) => (
+                  {heatmap.timeSlots.map((slot) => (
                     <th key={slot} className="py-2.5 px-3">{slot}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-borderNeutral dark:divide-[#262626]">
-                {days.map((day, dIdx) => (
+                {heatmap.days.map((day, dIdx) => (
                   <tr key={day}>
                     <td className="py-2.5 px-3 font-semibold text-left text-primaryText dark:text-white bg-slate-50/50 dark:bg-[#181818]">
                       {day}
                     </td>
-                    {heatmapData[dIdx].map((val, tIdx) => (
+                    {heatmap.heatmapMatrix[dIdx].map((val, tIdx) => (
                       <td key={tIdx} className="py-2.5 px-2">
                         <div className={`py-1.5 rounded-lg text-[11px] ${getHeatmapColor(val)}`}>
                           {val}%

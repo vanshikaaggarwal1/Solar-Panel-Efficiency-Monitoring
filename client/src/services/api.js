@@ -48,7 +48,8 @@ export const updateAlertStatusApi = (id, status) => API.put(`/alerts/${id}/statu
 export const fetchReportsApi = () => API.get('/reports');
 export const generateReportApi = (data) => API.post('/reports/generate', data);
 
-// Dashboard APIs
+// Dashboard & Analytics APIs
 export const fetchDashboardStatsApi = () => API.get('/dashboard/stats');
+export const fetchAnalyticsApi = (params) => API.get('/dashboard/analytics', { params });
 
 export default API;
