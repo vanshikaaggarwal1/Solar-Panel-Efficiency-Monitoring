@@ -47,6 +47,19 @@ const MonitoringPage = () => {
     azimuthDeg: 180
   });
 
+  const [modelOptions, setModelOptions] = useState([
+    "Monocrystalline 400W",
+    "Monocrystalline 450W",
+    "Monocrystalline 500W",
+    "Monocrystalline 550W",
+    "Polycrystalline 330W",
+    "Polycrystalline 350W",
+    "Polycrystalline 400W",
+    "Thin Film 300W",
+    "Thin Film 350W",
+  ]);
+  const [customModel, setCustomModel] = useState("");
+
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
   const loadPanels = async () => {
@@ -178,12 +191,12 @@ const MonitoringPage = () => {
       <Sidebar />
 
       <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        
+
         {/* Header & Main Controls Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
-              Solar Array Fleet Inventory
+              Solar Panels Fleet Inventory
             </h1>
             <p className="text-xs text-secondaryText mt-0.5">
               Monitor, calibrate, and configure individual photovoltaic panel telemetry modules
@@ -195,11 +208,10 @@ const MonitoringPage = () => {
             <div className="flex items-center p-1 bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] rounded-xl">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
-                  viewMode === 'grid'
-                    ? 'bg-forest-500 text-white'
-                    : 'text-secondaryText hover:text-primaryText'
-                }`}
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${viewMode === 'grid'
+                  ? 'bg-forest-500 text-white'
+                  : 'text-secondaryText hover:text-primaryText'
+                  }`}
                 title="Grid view"
               >
                 <GridIcon className="w-3.5 h-3.5" />
@@ -207,11 +219,10 @@ const MonitoringPage = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-forest-500 text-white'
-                    : 'text-secondaryText hover:text-primaryText'
-                }`}
+                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${viewMode === 'list'
+                  ? 'bg-forest-500 text-white'
+                  : 'text-secondaryText hover:text-primaryText'
+                  }`}
                 title="List view"
               >
                 <ListIcon className="w-3.5 h-3.5" />
@@ -232,7 +243,7 @@ const MonitoringPage = () => {
         {/* Filter Toolbar */}
         <div className="saas-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            
+
             {/* Search Input */}
             <div className="relative w-64">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
@@ -309,7 +320,7 @@ const MonitoringPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredPanels.map((panel) => (
               <div key={panel.panelId} className="saas-card p-4 flex flex-col justify-between space-y-4">
-                
+
                 {/* Top Info */}
                 <div className="flex items-start justify-between">
                   <div>
@@ -319,7 +330,7 @@ const MonitoringPage = () => {
                     </div>
                     <p className="text-[11px] text-secondaryText mt-0.5 truncate">{panel.model}</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleOpenEditModal(panel)}
@@ -467,13 +478,56 @@ const MonitoringPage = () => {
 
           <div>
             <label className="block font-semibold text-secondaryText mb-1">Model & Specification</label>
-            <input
-              type="text"
+            <select
               required
               value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, model: e.target.value });
+                if (e.target.value !== "Other") {
+                  setCustomModel("");
+                }
+              }}
               className="w-full px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
-            />
+            >
+              <option value="">Select Model & Specification</option>
+              {modelOptions.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+
+              <option value="Other">Other</option>
+            </select>
+            {formData.model === "Other" && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={customModel}
+                  onChange={(e) => setCustomModel(e.target.value)}
+                  placeholder="Enter model & specification"
+                  className="flex-1 px-3 py-2 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const model = customModel.trim();
+
+                    if (!model) return;
+
+                    if (!modelOptions.includes(model)) {
+                      setModelOptions([...modelOptions, model]);
+                    }
+
+                    setFormData({ ...formData, model });
+                    setCustomModel("");
+                  }}
+                  className="px-4 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold shadow-subtle"
+                >
+                  Add
+                </button>
+              </div>
+            )}
           </div>
 
           <div>

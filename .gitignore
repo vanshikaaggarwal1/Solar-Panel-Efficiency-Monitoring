@@ -3,7 +3,6 @@
 # ==========================
 node_modules/
 **/node_modules/
-
 # ==========================
 # Environment Variables
 # ==========================
@@ -90,3 +89,6 @@ pids
 # Miscellaneous
 # ==========================
 *.tgz
+
+
+**/reference.txt
