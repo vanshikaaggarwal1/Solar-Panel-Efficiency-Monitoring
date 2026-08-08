@@ -61,7 +61,7 @@ const seedDatabaseIfEmpty = async () => {
 };
 
 const connectDB = async () => {
-  const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/solar_monitoring';
+  const mongoURI = process.env.MONGODB_URI;
   try {
     mongoose.set('strictQuery', false);
     await mongoose.connect(mongoURI, {

@@ -6,7 +6,7 @@ const { connectDB, getStore, getIsConnected } = require('./config/db');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 6000;
+const PORT = process.env.PORT;
 
 // Middleware
 app.use(cors());
