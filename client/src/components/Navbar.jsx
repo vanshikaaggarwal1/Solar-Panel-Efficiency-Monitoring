@@ -24,6 +24,16 @@ const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
+
+  const isDashboardPage =
+    location.pathname.startsWith('/dashboard') ||
+    location.pathname.startsWith('/monitoring') ||
+    location.pathname.startsWith('/analytics') ||
+    location.pathname.startsWith('/alerts') ||
+    location.pathname.startsWith('/maintenance') ||
+    location.pathname.startsWith('/reports') ||
+    location.pathname.startsWith('/profile');
+
   const navigate = useNavigate();
 
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -48,10 +58,18 @@ const Navbar = () => {
     { name: 'Settings', path: '/profile', icon: Settings },
   ];
 
+  const navItems = [
+    { name: "Home", path: "#home" },
+    { name: "How It Works", path: "#how-it-works" },
+    { name: "Features", path: "#features" },
+    { name: "Insights", path: "#insights" },
+    { name: "About", path: "#about" },
+  ];
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#181818] border-b border-borderNeutral dark:border-[#2A2A2A] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        
+
         {/* Left Welcome / Brand Header */}
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2.5">
@@ -72,7 +90,7 @@ const Navbar = () => {
         </div>
 
         {/* Center Search Input */}
-        {isAuthenticated && (
+        {/* {isAuthenticated && (
           <div className="hidden lg:flex items-center relative w-72">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3" />
             <input
@@ -81,11 +99,49 @@ const Navbar = () => {
               className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
             />
           </div>
-        )}
+        )} */}
+        {!isDashboardPage && (
+          <nav className="hidden lg:flex items-center">
+            <ul className="flex items-center gap-2">
+              {navItems.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.path}
+                    className="
+            relative px-3 py-2
+            text-sm font-medium
+            text-secondaryText
+            hover:text-primaryText
+            dark:text-gray-300
+            dark:hover:text-white
+            rounded-lg
+            transition-all duration-200
+            group
+          ">{item.name}
+                    {/* Animated underline */}
+                    <span
+                      className="
+              absolute
+              left-3 right-3 bottom-0
+              h-[2px]
+              bg-forest-500
+              rounded-full
+              scale-x-0
+              group-hover:scale-x-100
+              transition-transform duration-200
+              origin-center
+            "
+                    />
 
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
         {/* Right Actions & Profile */}
         <div className="flex items-center gap-3">
-          
+
           {/* Light / Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
