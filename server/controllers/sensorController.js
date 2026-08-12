@@ -39,7 +39,7 @@ const getSensorHistory = async (req, res) => {
 // Insert new telemetry tick and trigger automated anomaly alerts in MongoDB
 const addTelemetryTick = async (req, res) => {
   try {
-    const { panelId, powerOutputKW, voltageV, currentA, temperatureC, irradianceWM2, efficiencyPct } = req.body;
+    const { panelId, powerOutputKW, voltageV, currentA, temperatureC, irradianceWM2, efficiencyPct, panelAreaM2, panelArea, area } = req.body;
     const isConnected = getIsConnected();
 
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -48,8 +48,14 @@ const addTelemetryTick = async (req, res) => {
     const targetPanelId = panelId || 'SP-101';
     const tempVal = parseFloat(temperatureC || 38.0);
     const voltVal = parseFloat(voltageV || 48.0);
-    const effVal = parseFloat(efficiencyPct || 22.0);
-    const powerVal = parseFloat(powerOutputKW || 3.8);
+    const currVal = parseFloat(currentA || 79.0);
+    const irrVal = parseFloat(irradianceWM2 || 950);
+    const areaVal = parseFloat(panelAreaM2 || panelArea || area || 16.64);
+
+    const outputW = voltVal * currVal;
+    const powerVal = powerOutputKW ? parseFloat(powerOutputKW) : parseFloat((outputW / 1000).toFixed(2));
+    const solarInputW = irrVal * areaVal;
+    const effVal = efficiencyPct ? parseFloat(efficiencyPct) : (solarInputW > 0 ? parseFloat(((outputW / solarInputW) * 100).toFixed(1)) : 0);
 
     const tick = {
       _id: 'sns-' + Date.now(),
@@ -58,9 +64,9 @@ const addTelemetryTick = async (req, res) => {
       date,
       powerOutputKW: powerVal,
       voltageV: voltVal,
-      currentA: parseFloat(currentA || 79.0),
+      currentA: currVal,
       temperatureC: tempVal,
-      irradianceWM2: parseFloat(irradianceWM2 || 950),
+      irradianceWM2: irrVal,
       efficiencyPct: effVal
     };
 

@@ -2,6 +2,28 @@ const { getStore, getIsConnected } = require('../config/db');
 const SolarPanel = require('../models/SolarPanel');
 
 // Get all panels with search, filter, and sort
+const computeDynamicPanelMetrics = (panelObj) => {
+  if (!panelObj) return panelObj;
+  const p = typeof panelObj.toObject === 'function' ? panelObj.toObject() : { ...panelObj };
+  const v = p.voltageV !== undefined && p.voltageV !== null ? Number(p.voltageV) : 0;
+  const a = p.currentA !== undefined && p.currentA !== null ? Number(p.currentA) : 0;
+  const irr = p.irradianceWM2 !== undefined && p.irradianceWM2 !== null ? Number(p.irradianceWM2) : 0;
+  const area = Number(p.panelAreaM2 || p.panelArea || p.area || 16.64);
+
+  const outputPowerW = v * a;
+  const currentOutputKW = parseFloat((outputPowerW / 1000).toFixed(2));
+  const solarInputW = irr * area;
+  const efficiency = solarInputW > 0 ? parseFloat(((outputPowerW / solarInputW) * 100).toFixed(1)) : 0;
+
+  return {
+    ...p,
+    panelAreaM2: area,
+    currentOutputKW,
+    efficiency
+  };
+};
+
+// Get all panels with search, filter, and sort
 const getPanels = async (req, res) => {
   try {
     const { search, status, location, sortBy, sortOrder } = req.query;
@@ -65,7 +87,8 @@ const getPanels = async (req, res) => {
       }
     }
 
-    res.json({ success: true, count: panels.length, data: panels });
+    const calculatedPanels = panels.map(p => computeDynamicPanelMetrics(p));
+    res.json({ success: true, count: calculatedPanels.length, data: calculatedPanels });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to fetch panels: ' + err.message });
   }
@@ -88,7 +111,7 @@ const getPanelById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Solar panel not found.' });
     }
 
-    res.json({ success: true, data: panel });
+    res.json({ success: true, data: computeDynamicPanelMetrics(panel) });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error retrieving panel: ' + err.message });
   }
@@ -97,12 +120,22 @@ const getPanelById = async (req, res) => {
 // Create new Solar Panel
 const createPanel = async (req, res) => {
   try {
-    const { panelId, model, type, status, installationDate, location, ratedCapacityKW, tiltAngleDeg, azimuthDeg } = req.body;
+    const { panelId, model, type, status, installationDate, location, ratedCapacityKW, tiltAngleDeg, azimuthDeg, panelAreaM2, panelArea, area, voltageV, currentA, irradianceWM2 } = req.body;
     if (!panelId || !model || !type || !location || !ratedCapacityKW) {
       return res.status(400).json({ success: false, message: 'Missing required panel configuration fields.' });
     }
 
     const isConnected = getIsConnected();
+
+    const areaM2 = parseFloat(panelAreaM2 || panelArea || area || 16.64);
+    const voltVal = parseFloat(voltageV || req.body.ratedVoltageV || 48.0);
+    const currVal = parseFloat(currentA || req.body.ratedCurrentA || 80.0);
+    const irrVal = parseFloat(irradianceWM2 || 950);
+
+    const outputW = voltVal * currVal;
+    const currentOutputKW = parseFloat((outputW / 1000).toFixed(2));
+    const solarInputW = irrVal * areaM2;
+    const efficiency = solarInputW > 0 ? parseFloat(((outputW / solarInputW) * 100).toFixed(1)) : 0;
 
     const newPanelData = {
       _id: panelId,
@@ -113,12 +146,13 @@ const createPanel = async (req, res) => {
       installationDate: installationDate || new Date().toISOString().split('T')[0],
       location,
       ratedCapacityKW: parseFloat(ratedCapacityKW),
-      currentOutputKW: parseFloat((ratedCapacityKW * 0.92).toFixed(2)),
-      efficiency: 22.5,
+      panelAreaM2: areaM2,
+      currentOutputKW,
+      efficiency,
       temperatureC: 36.0,
-      voltageV: 48.0,
-      currentA: 80.0,
-      irradianceWM2: 950,
+      voltageV: voltVal,
+      currentA: currVal,
+      irradianceWM2: irrVal,
       batteryStatusPct: 95,
       lastMaintenanceDate: new Date().toISOString().split('T')[0],
       tiltAngleDeg: tiltAngleDeg ? parseInt(tiltAngleDeg) : 30,
@@ -128,14 +162,14 @@ const createPanel = async (req, res) => {
     if (isConnected) {
       const dbPanel = new SolarPanel(newPanelData);
       await dbPanel.save();
-      return res.status(201).json({ success: true, data: dbPanel });
+      return res.status(201).json({ success: true, data: computeDynamicPanelMetrics(dbPanel) });
     } else {
       const exists = getStore().solarPanels.some(p => p.panelId.toLowerCase() === panelId.toLowerCase());
       if (exists) {
         return res.status(400).json({ success: false, message: `Panel ID '${panelId}' already exists.` });
       }
       getStore().solarPanels.push(newPanelData);
-      return res.status(201).json({ success: true, data: newPanelData });
+      return res.status(201).json({ success: true, data: computeDynamicPanelMetrics(newPanelData) });
     }
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to create solar panel: ' + err.message });
@@ -153,14 +187,14 @@ const updatePanel = async (req, res) => {
       if (!updated) {
         return res.status(404).json({ success: false, message: 'Panel not found for update.' });
       }
-      return res.json({ success: true, data: updated });
+      return res.json({ success: true, data: computeDynamicPanelMetrics(updated) });
     } else {
       const index = getStore().solarPanels.findIndex(p => p._id === id || p.panelId === id);
       if (index === -1) {
         return res.status(404).json({ success: false, message: 'Panel not found.' });
       }
       getStore().solarPanels[index] = { ...getStore().solarPanels[index], ...req.body };
-      return res.json({ success: true, data: getStore().solarPanels[index] });
+      return res.json({ success: true, data: computeDynamicPanelMetrics(getStore().solarPanels[index]) });
     }
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to update panel: ' + err.message });

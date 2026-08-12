@@ -9,6 +9,7 @@ const solarPanelSchema = new mongoose.Schema({
   installationDate: { type: String, required: true },
   location: { type: String, required: true, index: true },
   ratedCapacityKW: { type: Number, required: true, min: 0 },
+  panelAreaM2: { type: Number, default: 16.64, min: 0 },
   currentOutputKW: { type: Number, default: 0, min: 0 },
   efficiency: { type: Number, default: 0, min: 0, max: 100 },
   temperatureC: { type: Number, default: 25 },

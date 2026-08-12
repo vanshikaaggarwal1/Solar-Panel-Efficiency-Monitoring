@@ -38,6 +38,7 @@ const solarPanels = [
     installationDate: '2023-05-12',
     location: 'Rooftop Sector Alpha (Bay 1)',
     ratedCapacityKW: 4.0,
+    panelAreaM2: 17.63,
     currentOutputKW: 3.82,
     efficiency: 22.8,
     temperatureC: 38.5,
@@ -58,6 +59,7 @@ const solarPanels = [
     installationDate: '2023-05-12',
     location: 'Rooftop Sector Alpha (Bay 2)',
     ratedCapacityKW: 4.0,
+    panelAreaM2: 18.1,
     currentOutputKW: 3.76,
     efficiency: 22.1,
     temperatureC: 41.2,
@@ -78,6 +80,7 @@ const solarPanels = [
     installationDate: '2022-11-04',
     location: 'Carport East Canopy',
     ratedCapacityKW: 3.8,
+    panelAreaM2: 16.64,
     currentOutputKW: 2.15,
     efficiency: 14.2,
     temperatureC: 56.4,
@@ -98,6 +101,7 @@ const solarPanels = [
     installationDate: '2024-01-20',
     location: 'Ground Array West Field 1',
     ratedCapacityKW: 4.5,
+    panelAreaM2: 19.18,
     currentOutputKW: 4.41,
     efficiency: 23.5,
     temperatureC: 35.8,
@@ -118,6 +122,7 @@ const solarPanels = [
     installationDate: '2024-01-20',
     location: 'Ground Array West Field 2',
     ratedCapacityKW: 4.5,
+    panelAreaM2: 19.34,
     currentOutputKW: 4.38,
     efficiency: 23.2,
     temperatureC: 36.5,
@@ -138,6 +143,7 @@ const solarPanels = [
     installationDate: '2023-08-15',
     location: 'South Wing Annex',
     ratedCapacityKW: 4.0,
+    panelAreaM2: 18.0,
     currentOutputKW: 0.00,
     efficiency: 0.0,
     temperatureC: 24.1,
@@ -158,6 +164,7 @@ const solarPanels = [
     installationDate: '2022-04-10',
     location: 'North Perimeter Array',
     ratedCapacityKW: 3.5,
+    panelAreaM2: 18.0,
     currentOutputKW: 0.00,
     efficiency: 0.0,
     temperatureC: 22.0,
@@ -178,6 +185,7 @@ const solarPanels = [
     installationDate: '2023-09-01',
     location: 'Rooftop Sector Beta',
     ratedCapacityKW: 4.1,
+    panelAreaM2: 18.78,
     currentOutputKW: 3.95,
     efficiency: 21.9,
     temperatureC: 39.0,
@@ -194,24 +202,32 @@ const solarPanels = [
 const generateSensorHistory = () => {
   const history = [];
   const hours = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
-  const baseOutputs = [0.4, 1.8, 3.2, 4.2, 3.9, 2.7, 1.1, 0.1];
   const baseIrradiance = [120, 420, 780, 1020, 950, 640, 260, 30];
   const baseTemps = [22, 28, 36, 44, 43, 38, 31, 25];
 
   solarPanels.forEach(panel => {
     hours.forEach((time, idx) => {
       const factor = panel.status === 'Offline' ? 0 : panel.status === 'Maintenance' ? 0 : panel.status === 'Degraded' ? 0.55 : 1.0;
+      const v = factor > 0 ? parseFloat((45 + Math.random() * 5).toFixed(1)) : 0;
+      const a = factor > 0 ? parseFloat((70 + Math.random() * 15).toFixed(1)) : 0;
+      const irr = baseIrradiance[idx];
+      const area = panel.panelAreaM2 || 16.64;
+      const powerW = v * a;
+      const powerKW = parseFloat((powerW / 1000).toFixed(2));
+      const solarInputW = irr * area;
+      const effPct = (solarInputW > 0 && powerW > 0) ? parseFloat(((powerW / solarInputW) * 100).toFixed(1)) : 0;
+
       history.push({
         _id: `sns-${panel.panelId}-${idx}`,
         panelId: panel.panelId,
         timestamp: `${time}`,
         date: '2026-08-02',
-        powerOutputKW: parseFloat((baseOutputs[idx] * factor * (panel.ratedCapacityKW / 4.0)).toFixed(2)),
-        voltageV: factor > 0 ? parseFloat((45 + Math.random() * 5).toFixed(1)) : 0,
-        currentA: factor > 0 ? parseFloat((70 + Math.random() * 15).toFixed(1)) : 0,
+        powerOutputKW: powerKW,
+        voltageV: v,
+        currentA: a,
         temperatureC: parseFloat((baseTemps[idx] + (panel.status === 'Degraded' ? 12 : 0)).toFixed(1)),
-        irradianceWM2: baseIrradiance[idx],
-        efficiencyPct: parseFloat((panel.efficiency * (factor > 0 ? 0.95 + Math.random() * 0.1 : 0)).toFixed(1))
+        irradianceWM2: irr,
+        efficiencyPct: effPct
       });
     });
   });

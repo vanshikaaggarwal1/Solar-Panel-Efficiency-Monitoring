@@ -40,12 +40,17 @@ setInterval(() => {
     const store = getStore();
     store.solarPanels.forEach(panel => {
       if (panel.status === 'Active') {
-        const deltaKW = (Math.random() * 0.1 - 0.05);
-        panel.currentOutputKW = Math.max(0, parseFloat((panel.currentOutputKW + deltaKW).toFixed(2)));
         panel.temperatureC = parseFloat((35 + Math.random() * 8).toFixed(1));
         panel.voltageV = parseFloat((47.5 + Math.random() * 1.5).toFixed(1));
         panel.currentA = parseFloat((78 + Math.random() * 4).toFixed(1));
         panel.irradianceWM2 = Math.round(920 + Math.random() * 80);
+
+        const area = panel.panelAreaM2 || panel.panelArea || panel.area || 16.64;
+        const outputPowerW = panel.voltageV * panel.currentA;
+        const solarInputW = panel.irradianceWM2 * area;
+
+        panel.currentOutputKW = parseFloat((outputPowerW / 1000).toFixed(2));
+        panel.efficiency = solarInputW > 0 ? parseFloat(((outputPowerW / solarInputW) * 100).toFixed(1)) : 0;
       }
     });
   }
