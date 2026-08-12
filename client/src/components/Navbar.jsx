@@ -54,7 +54,7 @@ const Navbar = () => {
         
         {/* Left Welcome / Brand Header */}
         <div className="flex items-center gap-6">
-          <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-forest-500 text-white flex items-center justify-center font-bold text-xs shadow-subtle">
               <Sun className="w-4 h-4 text-sand-400" />
             </div>

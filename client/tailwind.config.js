@@ -12,6 +12,8 @@ export default {
         sidebarBg: '#1F1F1F',
         primaryText: '#1A1A1A',
         secondaryText: '#6B7280',
+        darkSecondary: '#c6c7c9',
+        tertiaryText: '#3f444b',
         borderNeutral: '#E5E7EB',
         forest: {
           500: '#2E5E4E',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import solarVideo from '../assets/home_solar.mp4';
 import Footer from '../components/Footer';
 import {
   Sun,
@@ -58,53 +59,67 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
-      
+
       {/* Hero Section */}
-      <section className="px-4 sm:px-6 lg:px-8 pt-16 pb-20 max-w-7xl mx-auto space-y-12 text-center">
-        
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-forest-500/10 border border-forest-500/20 text-forest-500 font-semibold text-xs mx-auto">
-          <Sun className="w-3.5 h-3.5 text-sand-400" />
-          <span>Industrial Telemetry & Photovoltaic Intelligence</span>
-        </div>
+      <section className="relative overflow-hidden px-4 sm:px-6 lg:px-8 pt-16 pb-20 text-center">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src={solarVideo} type="video/mp4" />
+        </video>
 
-        <div className="max-w-4xl mx-auto space-y-4">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-primaryText dark:text-white leading-tight">
-            Enterprise Solar Fleet Monitoring & Telemetry Analytics
-          </h1>
-          <p className="text-base sm:text-lg text-secondaryText max-w-2xl mx-auto leading-relaxed">
-            Maximize photovoltaic generation efficiency, automate thermal anomaly detection, and streamline field work orders for utility-scale solar installations.
-          </p>
-        </div>
+        {/* Video Overlay */}
+        <div className="absolute inset-0 bg-warmBg/30 dark:bg-[#121212]/30" />
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            to="/dashboard"
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors"
-          >
-            <span>Access Live Console</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+        <div className="relative z-10 max-w-7xl mx-auto space-y-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-forest-500/10 border border-forest-500/20 text-forest-500 font-semibold text-xs mx-auto">
+            <Sun className="w-3.5 h-3.5 text-sand-400" />
+            <span>Industrial Telemetry & Photovoltaic Intelligence</span>
+          </div>
 
-          <Link
-            to="/login"
-            className="w-full sm:w-auto px-6 py-3 rounded-xl border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white hover:bg-slate-100 dark:hover:bg-[#202020] font-semibold text-xs transition-colors"
-          >
-            Operator Sign In
-          </Link>
-        </div>
+          <div className="max-w-4xl mx-auto space-y-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-primaryText dark:text-white leading-tight">
+              Enterprise Solar Fleet Monitoring & Telemetry Analytics
+            </h1>
+            <p className="text-base sm:text-lg text-tertiaryText max-w-2xl mx-auto leading-relaxed dark:text-borderNeutral">
+              Maximize photovoltaic generation efficiency, automate thermal anomaly detection, and streamline field work orders for utility-scale solar installations.
+            </p>
+          </div>
 
-        {/* Fleet Performance Stat Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto pt-8">
-          {stats.map((item, idx) => (
-            <div key={idx} className="saas-card p-4 text-left">
-              <span className="text-[11px] font-semibold text-secondaryText block">{item.label}</span>
-              <span className={`text-2xl font-bold tracking-tight block my-1 ${item.color}`}>
-                {item.value}
-              </span>
-              <span className="text-[10px] text-slate-400">{item.change}</span>
-            </div>
-          ))}
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/dashboard"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs shadow-subtle flex items-center justify-center gap-2 transition-colors"
+            >
+              <span>Access Live Console</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <Link
+              to="/login"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white hover:bg-slate-100 dark:hover:bg-[#202020] font-semibold text-xs transition-colors"
+            >
+              Operator Sign In
+            </Link>
+          </div>
+
+          {/* Fleet Performance Stat Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto pt-8">
+            {stats.map((item, idx) => (
+              <div key={idx} className="saas-card p-4 text-left">
+                <span className="text-[11px] font-semibold text-secondaryText block">{item.label}</span>
+                <span className={`text-2xl font-bold tracking-tight block my-1 ${item.color}`}>
+                  {item.value}
+                </span>
+                <span className="text-[10px] text-slate-400">{item.change}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
       </section>

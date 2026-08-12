@@ -72,7 +72,8 @@ const connectDB = async () => {
     await seedDatabaseIfEmpty();
   } catch (err) {
     isConnected = false;
-    console.log('⚠️ MongoDB connection unavailable. Operating in fallback mode.');
+    console.error('❌ MongoDB connection failed:', err.message);
+    console.log('⚠️ Operating in fallback mode.');
   }
 };
 
