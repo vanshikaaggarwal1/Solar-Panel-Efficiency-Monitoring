@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  [id] {
+    scroll-margin-top: 5rem;
+  }
   body {
     @apply min-h-screen bg-warmBg text-primaryText font-sans transition-colors duration-200 antialiased selection:bg-forest-500 selection:text-white;
   }
@@ -10,12 +16,32 @@
 
 /* Minimal Enterprise Card Rules */
 .saas-card {
-  @apply bg-white dark:bg-[#181818] border border-borderNeutral dark:border-[#2A2A2A] rounded-2xl shadow-subtle transition-all duration-200;
+  @apply bg-white dark:bg-[#181818] border border-borderNeutral dark:border-[#2A2A2A] rounded-2xl shadow-subtle transition-all duration-300;
 }
 
 .saas-card:hover {
-  @apply border-slate-300 dark:border-[#383838] shadow-card;
+  @apply border-slate-300 dark:border-[#383838] shadow-card -translate-y-1;
 }
+
+@keyframes animateFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: animateFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-delay-100 { animation-delay: 100ms; }
+.animate-delay-200 { animation-delay: 200ms; }
+.animate-delay-300 { animation-delay: 300ms; }
+.animate-delay-400 { animation-delay: 400ms; }
 
 /* Custom Minimal Scrollbars */
 ::-webkit-scrollbar {
