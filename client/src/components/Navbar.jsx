@@ -67,7 +67,7 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#181818] border-b border-borderNeutral dark:border-[#2A2A2A] transition-colors">
+    <header className="sticky top-0 z-40 w-full bg-[#F2F0E9] dark:bg-[#132F29] border-b border-borderNeutral dark:border-[#1E5B4C]/40 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
         {/* Left Welcome / Brand Header */}
@@ -82,7 +82,7 @@ const Navbar = () => {
           </Link>
 
           {isAuthenticated && (
-            <div className="hidden md:flex items-center gap-2 text-xs text-secondaryText border-l border-borderNeutral dark:border-[#2A2A2A] pl-4">
+            <div className="hidden md:flex items-center gap-2 text-xs text-secondaryText border-l border-borderNeutral dark:border-[#1E5B4C]/40 pl-4">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <span>{currentDate}</span>
             </div>
@@ -145,7 +145,7 @@ const Navbar = () => {
           {/* Light / Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-secondaryText hover:text-primaryText hover:bg-warmBg dark:hover:bg-[#2A2A2A] transition-colors"
+            className="p-2 rounded-xl text-secondaryText hover:text-primaryText hover:bg-warmBg dark:hover:bg-[#17473B] transition-colors"
             title="Toggle theme"
           >
             {isDarkMode ? <Sun className="w-4 h-4 text-sand-400" /> : <Moon className="w-4 h-4" />}
@@ -156,7 +156,7 @@ const Navbar = () => {
               {/* Notification Bell */}
               <Link
                 to="/alerts"
-                className="p-2 rounded-xl text-secondaryText hover:text-primaryText hover:bg-warmBg dark:hover:bg-[#2A2A2A] transition-colors relative"
+                className="p-2 rounded-xl text-secondaryText hover:text-primaryText hover:bg-warmBg dark:hover:bg-[#17473B] transition-colors relative"
                 title="System Notifications"
               >
                 <Bell className="w-4 h-4" />
@@ -164,7 +164,7 @@ const Navbar = () => {
               </Link>
 
               {/* User Avatar */}
-              <div className="flex items-center gap-3 border-l border-borderNeutral dark:border-[#2A2A2A] pl-3">
+              <div className="flex items-center gap-3 border-l border-borderNeutral dark:border-[#1E5B4C]/40 pl-3">
                 <Link to="/profile" className="flex items-center gap-2 group">
                   <div className="w-7 h-7 rounded-full bg-forest-500 text-white flex items-center justify-center text-xs font-bold shadow-subtle group-hover:bg-forest-600 transition-colors">
                     {user?.name ? user.name.substring(0, 2).toUpperCase() : 'AV'}

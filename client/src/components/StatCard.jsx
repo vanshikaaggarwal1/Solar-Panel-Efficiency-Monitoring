@@ -9,7 +9,7 @@ const StatCard = ({ title, value, unit = '', icon: Icon, trend, trendValue, subt
           {title}
         </span>
         {Icon && (
-          <div className="w-7 h-7 rounded-lg bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] flex items-center justify-center text-slate-600 dark:text-slate-300">
+          <div className="w-7 h-7 rounded-lg bg-warmBg dark:bg-[#101815] border border-borderNeutral dark:border-[#1E5B4C]/30 flex items-center justify-center text-slate-600 dark:text-slate-300">
             <Icon className="w-3.5 h-3.5" />
           </div>
         )}

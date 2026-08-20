@@ -3,7 +3,7 @@ import { Sun, ShieldCheck, Globe, Activity } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-white dark:bg-[#181818] border-t border-borderNeutral dark:border-[#262626] mt-auto transition-colors">
+    <footer className="bg-[#F2F0E9] dark:bg-[#132F29] border-t border-borderNeutral dark:border-[#1E5B4C]/40 mt-auto transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           
@@ -52,7 +52,7 @@ const Footer = () => {
             <h4 className="text-xs font-bold uppercase tracking-wider text-primaryText dark:text-white mb-3">
               Substation Telemetry
             </h4>
-            <div className="p-3 rounded-xl bg-warmBg dark:bg-[#202020] border border-borderNeutral dark:border-[#262626] text-xs space-y-1">
+            <div className="p-3 rounded-xl bg-warmBg dark:bg-[#101815] border border-borderNeutral dark:border-[#1E5B4C]/40 text-xs space-y-1">
               <div className="flex justify-between font-medium">
                 <span className="text-secondaryText">Gateway Status:</span>
                 <span className="text-forest-500 font-bold">ONLINE</span>
@@ -66,7 +66,7 @@ const Footer = () => {
 
         </div>
 
-        <div className="border-t border-borderNeutral dark:border-[#262626] pt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-secondaryText">
+        <div className="border-t border-borderNeutral dark:border-[#1E5B4C]/40 pt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-secondaryText">
           <p>© {new Date().getFullYear()} Solarix Systems. Industrial Telemetry Platform.</p>
           <p className="mt-2 sm:mt-0 font-medium">Enterprise Photovoltaic Infrastructure</p>
         </div>
