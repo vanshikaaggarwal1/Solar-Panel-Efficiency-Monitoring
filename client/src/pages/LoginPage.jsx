@@ -93,13 +93,6 @@ const LoginPage = () => {
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
-
-          {/* Quick Demo Login Hint */}
-          <div className="pt-3 border-t border-borderNeutral dark:border-[#262626] text-center">
-            <p className="text-[11px] text-secondaryText">
-              Demo Credentials: <span className="font-mono text-primaryText dark:text-white">admin@solarix.com</span> / <span className="font-mono text-primaryText dark:text-white">admin123</span>
-            </p>
-          </div>
         </div>
 
         <div className="text-center text-xs text-secondaryText">
