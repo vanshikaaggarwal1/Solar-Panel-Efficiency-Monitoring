@@ -79,14 +79,14 @@ const Navbar = () => {
 
         {/* Left Welcome / Brand Header */}
         <div className="flex items-center gap-6">
-          <Link to="/" className="flex items-center gap-2.5">
+          <a href="/#home" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-forest-500 text-white flex items-center justify-center font-bold text-xs shadow-subtle">
               <Sun className="w-4 h-4 text-sand-400" />
             </div>
             <span className="font-bold text-base tracking-tight text-primaryText dark:text-white">
               SOLARIX
             </span>
-          </Link>
+          </a>
 
           {isAuthenticated && (
             <div className="hidden md:flex items-center gap-2 text-xs text-secondaryText border-l border-borderNeutral dark:border-[#1E5B4C]/40 pl-4">
