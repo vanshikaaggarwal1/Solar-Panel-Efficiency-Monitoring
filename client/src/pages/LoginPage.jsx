@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
-import { Sun, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sun, Mail, Lock, ArrowRight, ShieldCheck , ArrowLeft} from 'lucide-react';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -33,8 +33,16 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-warmBg dark:bg-[#121212] px-4 py-12 transition-colors">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="absolute top-3 left-3 p-2 rounded-xl text-secondaryText hover:text-primaryText hover:bg-warmBg dark:hover:bg-[#222] transition-colors"
+        title="Go back"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
       <div className="w-full max-w-md space-y-6">
-        
+
         {/* Header Logo */}
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="w-10 h-10 rounded-xl bg-forest-500 text-white flex items-center justify-center shadow-subtle">

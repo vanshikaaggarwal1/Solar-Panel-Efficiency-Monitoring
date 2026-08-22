@@ -96,6 +96,14 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-warmBg dark:bg-[#121212] px-4 py-12 transition-colors">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="absolute top-3 left-3 p-2 rounded-xl text-secondaryText hover:text-primaryText hover:bg-warmBg dark:hover:bg-[#222] transition-colors"
+        title="Go back"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
       <div className="w-full max-w-md space-y-6">
 
         {/* Header Logo */}
@@ -136,11 +144,11 @@ const RegisterPage = () => {
                   <Home className="w-5 h-5 text-forest-500 mb-3" />
 
                   <h3 className="font-semibold text-primaryText dark:text-white">
-                    Personal / Home
+                    Personal
                   </h3>
 
-                  <p className="text-[11px] text-secondaryText mt-2">
-                    For managing solar at your home.
+                  <p className="text-[11px] text-secondaryText text-center mt-2">
+                    Residential Solar Management
                   </p>
                 </button>
 
@@ -155,8 +163,8 @@ const RegisterPage = () => {
                     Business
                   </h3>
 
-                  <p className="text-[11px] text-secondaryText mt-2">
-                    For businesses and commercial installations.
+                  <p className="text-[11px] text-secondaryText text-center mt-2">
+                    Commercial Solar Management
                   </p>
                 </button>
 
@@ -171,8 +179,8 @@ const RegisterPage = () => {
                     Enterprise
                   </h3>
 
-                  <p className="text-[11px] text-secondaryText mt-2">
-                    For organizations managing multiple solar sites.
+                  <p className="text-[11px] text-secondaryText text-center mt-2">
+                    Multi-Site Solar Management
                   </p>
                 </button>
 

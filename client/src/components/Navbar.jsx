@@ -25,6 +25,10 @@ const Navbar = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
 
+  const hideNavbar =
+    location.pathname === '/login' ||
+    location.pathname === '/register';
+
   const isDashboardPage =
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/monitoring') ||
@@ -65,6 +69,9 @@ const Navbar = () => {
     { name: "Insights", path: "#insights" },
     { name: "About", path: "#about" },
   ];
+  if (hideNavbar) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#F2F0E9] dark:bg-[#132F29] border-b border-borderNeutral dark:border-[#1E5B4C]/40 transition-colors">
