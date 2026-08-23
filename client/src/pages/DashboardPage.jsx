@@ -3,7 +3,7 @@ import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import GaugeChart from '../components/GaugeChart';
 import Toast from '../components/Toast';
-import { fetchDashboardStatsApi, fetchPanelsApi, pushTelemetryTickApi } from '../services/api';
+import { fetchDashboardStatsApi, fetchPanelsApi, pushTelemetryTickApi, fetchLatestTelemetryApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   Zap,
@@ -63,6 +63,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [panels, setPanels] = useState([]);
+  const [latestTelemetry, setLatestTelemetry] = useState([]);
   const [simulating, setSimulating] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
@@ -79,20 +80,53 @@ const DashboardPage = () => {
     year: 'numeric'
   });
 
+  const panelIds = ['SP-101', 'SP-102', 'SP-103', 'SP-104', 'SP-105'];
+
+  const randomPanelId =
+    panelIds[Math.floor(Math.random() * panelIds.length)];
+
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [dashRes, panelRes] = await Promise.all([
+      const [dashRes, panelRes, telemetryRes] = await Promise.all([
         fetchDashboardStatsApi(),
-        fetchPanelsApi()
+        fetchPanelsApi(),
+        fetchLatestTelemetryApi()
       ]);
 
       if (dashRes.data.success) {
         setDashboardData(dashRes.data);
       }
-      if (panelRes.data.success) {
-        setPanels(panelRes.data.data);
+
+      let fetchedPanels = panelRes.data.success ? panelRes.data.data : [];
+
+      if (telemetryRes.data?.success && telemetryRes.data.data.length > 0) {
+        setLatestTelemetry(telemetryRes.data.data);
+        const telemetryMap = {};
+        telemetryRes.data.data.forEach(t => {
+          telemetryMap[t.panelId] = t;
+        });
+
+        fetchedPanels = fetchedPanels.map(p => {
+          const t = telemetryMap[p.panelId];
+          if (t) {
+            return {
+              ...p,
+              currentPowerKW: t.power,
+              voltageV: t.voltage,
+              currentA: t.current,
+              temperatureC: t.temperature,
+              efficiency: t.efficiency,
+              efficiencyPct: t.efficiency,
+              irradianceWM2: t.irradiance,
+              status: t.status === 'Online' ? 'Active' : t.status === 'Fault' ? 'Degraded' : t.status
+            };
+          }
+          return p;
+        });
       }
+
+      setPanels(fetchedPanels);
     } catch (err) {
       console.error('Failed to load telemetry:', err);
       setToast({ message: 'Failed to synchronize live telemetry.', type: 'error' });
@@ -105,7 +139,7 @@ const DashboardPage = () => {
     loadData();
     const interval = setInterval(() => {
       loadData(true);
-    }, 8000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -113,13 +147,7 @@ const DashboardPage = () => {
     setSimulating(true);
     try {
       await pushTelemetryTickApi({
-        panelId: 'SP-104',
-        powerOutputKW: (4.1 + Math.random() * 0.4).toFixed(2),
-        voltageV: (51 + Math.random() * 2).toFixed(1),
-        currentA: (82 + Math.random() * 4).toFixed(1),
-        temperatureC: (36 + Math.random() * 4).toFixed(1),
-        irradianceWM2: Math.round(960 + Math.random() * 30),
-        efficiencyPct: (23.2 + Math.random() * 0.5).toFixed(1)
+        panelId: randomPanelId
       });
       setToast({ message: 'Sensor pulse received. Real-time telemetry updated.', type: 'success' });
       loadData(true);
@@ -345,7 +373,7 @@ const DashboardPage = () => {
                   : 'Enterprise Solar Overview'}
             </h1>
             <p className="text-xs text-secondaryText mt-0.5">
-              Welcome back, {user?.name || 'Operator'}. 
+              Welcome back, {user?.name || 'Operator'}.
             </p>
           </div>
 

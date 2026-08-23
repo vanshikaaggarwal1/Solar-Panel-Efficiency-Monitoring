@@ -10,7 +10,8 @@ let memoryStore = {
   sensorData: [...seed.sensorData],
   maintenanceRecords: [...seed.maintenanceRecords],
   alerts: [...seed.alerts],
-  reports: [...seed.reports]
+  reports: [...seed.reports],
+  telemetry: []
 };
 
 const seedDatabaseIfEmpty = async () => {

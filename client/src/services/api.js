@@ -33,6 +33,13 @@ export const deletePanelApi = (id) => API.delete(`/panels/${id}`);
 export const fetchSensorHistoryApi = (params) => API.get('/sensor-data/history', { params });
 export const pushTelemetryTickApi = (tickData) => API.post('/sensor-data/tick', tickData);
 
+// Real-time Solar Telemetry Simulator APIs
+export const fetchTelemetryApi = (params) => API.get('/telemetry', { params });
+export const fetchLatestTelemetryApi = () => API.get('/telemetry/latest');
+export const fetchTelemetryByPanelApi = (panelId, params) => API.get(`/telemetry/panel/${panelId}`, { params });
+export const fetchTelemetryHistoryApi = (panelId, params) => API.get(`/telemetry/history/${panelId}`, { params });
+export const seedTelemetryApi = () => API.post('/telemetry/seed');
+
 // Maintenance APIs
 export const fetchMaintenanceApi = () => API.get('/maintenance');
 export const createMaintenanceApi = (data) => API.post('/maintenance', data);

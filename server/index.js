@@ -15,10 +15,13 @@ app.use(express.json());
 // Connect Database
 connectDB();
 
+const { startTelemetrySimulator, generate30DayHistory } = require('./simulator/telemetrySimulator');
+
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/panels', require('./routes/panelRoutes'));
 app.use('/api/sensor-data', require('./routes/sensorRoutes'));
+app.use('/api/telemetry', require('./routes/telemetryRoutes'));
 app.use('/api/maintenance', require('./routes/maintenanceRoutes'));
 app.use('/api/alerts', require('./routes/alertRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
@@ -34,27 +37,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Telemetry Simulation Background Loop (fluctuates power, temp, voltage slightly)
-setInterval(() => {
-  if (!getIsConnected()) {
-    const store = getStore();
-    store.solarPanels.forEach(panel => {
-      if (panel.status === 'Active') {
-        panel.temperatureC = parseFloat((35 + Math.random() * 8).toFixed(1));
-        panel.voltageV = parseFloat((47.5 + Math.random() * 1.5).toFixed(1));
-        panel.currentA = parseFloat((78 + Math.random() * 4).toFixed(1));
-        panel.irradianceWM2 = Math.round(920 + Math.random() * 80);
-
-        const area = panel.panelAreaM2 || panel.panelArea || panel.area || 16.64;
-        const outputPowerW = panel.voltageV * panel.currentA;
-        const solarInputW = panel.irradianceWM2 * area;
-
-        panel.currentOutputKW = parseFloat((outputPowerW / 1000).toFixed(2));
-        panel.efficiency = solarInputW > 0 ? parseFloat(((outputPowerW / solarInputW) * 100).toFixed(1)) : 0;
-      }
-    });
-  }
-}, 5000);
+// Start Background Telemetry Simulator Engine
+startTelemetrySimulator();
+generate30DayHistory().catch(err => console.error('Initial history seed error:', err));
 
 app.listen(PORT, () => {
   console.log(`🚀 Solar Panel Monitoring Server running on http://localhost:${PORT}`);
