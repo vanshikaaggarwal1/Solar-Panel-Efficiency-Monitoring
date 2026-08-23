@@ -15,6 +15,7 @@ import AlertsPage from './pages/AlertsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -87,6 +88,13 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/users"
+                  element={
+                    <ProtectedRoute>
+                      <UserManagement />
+                    </ProtectedRoute>
+                  } />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />

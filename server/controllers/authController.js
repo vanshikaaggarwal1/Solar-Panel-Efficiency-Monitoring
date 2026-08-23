@@ -7,8 +7,8 @@ const User = require('../models/User');
 // Register User
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    const { name, email, password, accountType } = req.body;
+    if (!name || !email || !password || !accountType) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
     }
 
@@ -34,7 +34,8 @@ const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: 'Solar Operator',
+      role: 'Admin',
+      accountType,
       phone: '',
       location: 'Solar Array Station',
       notificationsEnabled: true
@@ -47,7 +48,7 @@ const register = async (req, res) => {
       getStore().users.push(newUser);
     }
 
-    const token = jwt.sign({ id: userId, email: newUser.email, name: newUser.name, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: userId, email: newUser.email, name: newUser.name, role: newUser.role, accountType: newUser.accountType }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
       success: true,
@@ -57,6 +58,7 @@ const register = async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
+        accountType: newUser.accountType,
         phone: newUser.phone,
         location: newUser.location,
         notificationsEnabled: newUser.notificationsEnabled
@@ -93,7 +95,7 @@ const login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials. Password incorrect.' });
     }
 
-    const token = jwt.sign({ id: user._id, email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, email: user.email, name: user.name, role: user.role, accountType: user.accountType }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
       success: true,
@@ -102,7 +104,8 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || 'Solar Operator',
+        role: user.role || 'Admin',
+         accountType: user.accountType || '',
         phone: user.phone || '',
         location: user.location || 'Solar Array Station',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
@@ -136,7 +139,8 @@ const getProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || 'Solar Operator',
+        role: user.role || 'Admin',
+        accountType: user.accountType || '',
         phone: user.phone || '',
         location: user.location || 'Solar Array Station',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true

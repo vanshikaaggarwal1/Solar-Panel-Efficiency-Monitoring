@@ -73,7 +73,22 @@ const RegisterPage = () => {
       return;
     }
     setSubmitting(true);
+
     try {
+      const registrationData = {
+        name,
+        email,
+        password,
+        accountType,
+        ...profileData
+      };
+
+      // Store complete registration data temporarily on frontend
+      localStorage.setItem(
+        'solarixRegistration',
+        JSON.stringify(registrationData)
+      );
+      
       const res = await register({
         name,
         email,
@@ -81,6 +96,7 @@ const RegisterPage = () => {
         accountType,
         ...profileData
       });
+
       if (res.success) {
         setToast({ message: 'Account registered! Redirecting to dashboard...', type: 'success' });
         setTimeout(() => navigate('/dashboard'), 400);

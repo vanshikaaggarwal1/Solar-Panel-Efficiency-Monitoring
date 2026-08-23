@@ -56,6 +56,9 @@ ChartJS.register(
 );
 
 const DashboardPage = () => {
+  const registrationData = JSON.parse(
+    localStorage.getItem('solarixRegistration') || '{}'
+  );
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
@@ -326,7 +329,7 @@ const DashboardPage = () => {
       <Sidebar />
 
       <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
-        
+
         {/* Top Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
           <div>
@@ -334,8 +337,12 @@ const DashboardPage = () => {
               <Radio className="w-3.5 h-3.5 text-forest-500 animate-pulse" />
               <span>Substation Telemetry Operating Console</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
-              Executive Solar Fleet Dashboard
+            <h1 className="text-xl font-bold text-primaryText dark:text-white">
+              {registrationData.accountType === 'personal'
+                ? 'Residential Solar Overview'
+                : registrationData.accountType === 'business'
+                  ? 'Commercial Solar Overview'
+                  : 'Enterprise Solar Overview'}
             </h1>
             <p className="text-xs text-secondaryText mt-0.5">
               Welcome back, {user?.name || 'Operator'}. Array Hub Sector 4 online.
@@ -361,7 +368,7 @@ const DashboardPage = () => {
 
         {/* 6 Core KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          
+
           {/* 1. Total Energy (MWh) */}
           <StatCard
             title="Total Energy"
@@ -432,7 +439,7 @@ const DashboardPage = () => {
 
         {/* 4 Enterprise Chart Widgets */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+
           {/* Chart 1: Line Chart */}
           <div className="saas-card p-5 space-y-3">
             <div className="flex items-center justify-between">

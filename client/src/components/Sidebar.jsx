@@ -18,6 +18,11 @@ import {
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const user = JSON.parse(localStorage.getItem('solar_user') || '{}');
+  const accountType = user.accountType || 'Operator';
+  const canManageUsers =
+    (user?.accountType === "business" || user?.accountType === "enterprise") &&
+    user?.role === "Admin";
 
   const navigationItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -26,14 +31,17 @@ const Sidebar = () => {
     { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: 3 },
     { name: 'Maintenance', path: '/maintenance', icon: Wrench },
     { name: 'Reports', path: '/reports', icon: FileText },
+    ...(canManageUsers
+      ? [{ name: 'Users', path: '/users', icon: User }]
+      : []),
     { name: 'Settings', path: '/profile', icon: Settings },
   ];
 
+
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-[#1F1F1F] text-slate-300 border-r border-[#2A2A2A] transition-all duration-200 relative z-30 ${
-        collapsed ? 'w-16' : 'w-60'
-      }`}
+      className={`hidden lg:flex flex-col bg-[#1F1F1F] text-slate-300 border-r border-[#2A2A2A] transition-all duration-200 relative z-30 ${collapsed ? 'w-16' : 'w-60'
+        }`}
     >
       {/* Collapse/Expand Toggle Button */}
       <button
@@ -45,7 +53,7 @@ const Sidebar = () => {
       </button>
 
       {/* Brand Logo Header */}
-      <div className="h-16 px-4 flex items-center gap-3 border-b border-[#2A2A2A] overflow-hidden">
+      {/* <div className="h-16 px-4 flex items-center gap-3 border-b border-[#2A2A2A] overflow-hidden">
         <div className="w-8 h-8 rounded-lg bg-forest-500 text-white flex items-center justify-center flex-shrink-0 font-bold text-sm">
           <Sun className="w-4 h-4 text-sand-400" />
         </div>
@@ -55,7 +63,26 @@ const Sidebar = () => {
             <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Enterprise IoT</span>
           </div>
         )}
-      </div>
+      </div> */}
+      {/* Account Type */}
+      {!collapsed && (
+        <div className="px-4 py-3 border-b border-[#2A2A2A]">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#2A2A2A] flex items-center justify-center ">
+              <ShieldCheck className="w-3.5 h-3.5 text-sand-400" />
+            </div>
+
+            <div className="flex flex-col min-w-0">
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
+                Account Type
+              </span>
+              <span className="text-[11px] text-white font-semibold truncate capitalize">
+                {accountType}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation Menu */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -72,11 +99,10 @@ const Sidebar = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
-                isActive
-                  ? 'bg-forest-500 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-[#2A2A2A]'
-              }`}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${isActive
+                ? 'bg-forest-500 text-white font-semibold'
+                : 'text-slate-400 hover:text-white hover:bg-[#2A2A2A]'
+                }`}
               title={collapsed ? item.name : undefined}
             >
               <div className="flex items-center gap-3">
@@ -84,9 +110,8 @@ const Sidebar = () => {
                 {!collapsed && <span>{item.name}</span>}
               </div>
               {!collapsed && item.badge && (
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-copper-500/20 text-copper-500'
-                }`}>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-copper-500/20 text-copper-500'
+                  }`}>
                   {item.badge}
                 </span>
               )}
