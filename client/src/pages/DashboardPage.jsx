@@ -345,7 +345,7 @@ const DashboardPage = () => {
                   : 'Enterprise Solar Overview'}
             </h1>
             <p className="text-xs text-secondaryText mt-0.5">
-              Welcome back, {user?.name || 'Operator'}. Array Hub Sector 4 online.
+              Welcome back, {user?.name || 'Operator'}. 
             </p>
           </div>
 
@@ -367,7 +367,7 @@ const DashboardPage = () => {
         </div>
 
         {/* 6 Core KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
 
           {/* 1. Total Energy (MWh) */}
           <StatCard
