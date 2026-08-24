@@ -22,4 +22,12 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken, JWT_SECRET };
+const verifyAdmin = (req, res, next) => {
+  if (!req.user || (req.user.role !== 'Admin' && req.user.role !== 'Administrator')) {
+    return res.status(403).json({ success: false, message: 'Access denied. Admin authorization required.' });
+  }
+  next();
+};
+
+module.exports = { verifyToken, verifyAdmin, JWT_SECRET };
+

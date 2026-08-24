@@ -19,6 +19,7 @@ const { startTelemetrySimulator, generate30DayHistory } = require('./simulator/t
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/panels', require('./routes/panelRoutes'));
 app.use('/api/sensor-data', require('./routes/sensorRoutes'));
 app.use('/api/telemetry', require('./routes/telemetryRoutes'));

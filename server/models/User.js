@@ -1,15 +1,22 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  _id: { type: String },
+  _id: { type: String, default: () => 'usr-' + Date.now() + Math.random().toString(36).substring(2, 6) },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'Admin' },
-  accountType: {
+  role: { type: String, default: 'User' },
+  accountType: { type: String, default: 'personal' },
+  status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
+  createdBy: {
     type: String,
-    enum: ['personal', 'business', 'enterprise'],
-    required: true
+    default: null
+  },
+
+  createdVia: {
+    type: String,
+    enum: ['self-registration', 'admin'],
+    default: 'self-registration'
   },
   phone: { type: String, default: '' },
   siteName: { type: String, default: '' },
@@ -33,3 +40,4 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
+

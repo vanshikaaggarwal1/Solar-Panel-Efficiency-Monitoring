@@ -5,7 +5,7 @@ let isConnected = false;
 
 // In-Memory state fallback when MongoDB is not connected
 let memoryStore = {
-  users: [...seed.users],
+  users: [],
   solarPanels: [...seed.solarPanels],
   sensorData: [...seed.sensorData],
   maintenanceRecords: [...seed.maintenanceRecords],
@@ -16,26 +16,19 @@ let memoryStore = {
 
 const seedDatabaseIfEmpty = async () => {
   try {
-    const User = require('../models/User');
     const SolarPanel = require('../models/SolarPanel');
     const SensorData = require('../models/SensorData');
     const Maintenance = require('../models/Maintenance');
     const Alert = require('../models/Alert');
     const Report = require('../models/Report');
 
-    const [userCount, panelCount, sensorCount, maintCount, alertCount, reportCount] = await Promise.all([
-      User.countDocuments(),
+    const [panelCount, sensorCount, maintCount, alertCount, reportCount] = await Promise.all([
       SolarPanel.countDocuments(),
       SensorData.countDocuments(),
       Maintenance.countDocuments(),
       Alert.countDocuments(),
       Report.countDocuments()
     ]);
-
-    if (userCount === 0) {
-      await User.insertMany(seed.users);
-      console.log('🌱 Seeded User collection.');
-    }
     if (panelCount === 0) {
       await SolarPanel.insertMany(seed.solarPanels);
       console.log('🌱 Seeded SolarPanel collection.');

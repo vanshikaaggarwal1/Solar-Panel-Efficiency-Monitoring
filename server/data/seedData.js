@@ -1,32 +1,4 @@
-const bcrypt = require('bcryptjs');
-
-const salt = bcrypt.genSaltSync(10);
-const defaultPasswordHash = bcrypt.hashSync('admin123', salt);
-
-const users = [
-  {
-    _id: 'usr-001',
-    name: 'Alex Vance',
-    email: 'admin@solar.com',
-    password: defaultPasswordHash,
-    role: 'Administrator',
-    phone: '+1 (555) 234-5678',
-    location: 'San Francisco Solar Tech Hub',
-    joinedDate: '2024-01-15',
-    notificationsEnabled: true
-  },
-  {
-    _id: 'usr-002',
-    name: 'Elena Rostova',
-    email: 'elena@solar.com',
-    password: defaultPasswordHash,
-    role: 'Solar Maintenance Engineer',
-    phone: '+1 (555) 987-6543',
-    location: 'Oakland Solar Farm 4',
-    joinedDate: '2024-03-20',
-    notificationsEnabled: true
-  }
-];
+const users = [];
 
 const solarPanels = [
   {

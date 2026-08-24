@@ -22,6 +22,13 @@ export const getProfileApi = () => API.get('/auth/profile');
 export const updateProfileApi = (data) => API.put('/auth/profile', data);
 export const changePasswordApi = (data) => API.put('/auth/change-password', data);
 
+// User Management APIs
+export const fetchUsersApi = () => API.get('/users');
+export const createUserApi = (userData) => API.post('/users', userData);
+export const updateUserApi = (id, userData) => API.put(`/users/${id}`, userData);
+export const deleteUserApi = (id) => API.delete(`/users/${id}`);
+export const updateUserStatusApi = (id, status) => API.put(`/users/${id}/status`, { status });
+
 // Solar Panel APIs
 export const fetchPanelsApi = (params) => API.get('/panels', { params });
 export const fetchPanelByIdApi = (id) => API.get(`/panels/${id}`);

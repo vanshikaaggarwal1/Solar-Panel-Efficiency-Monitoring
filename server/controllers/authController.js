@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { getStore, getIsConnected } = require('../config/db');
+const { getIsConnected } = require('../config/db');
 const { JWT_SECRET } = require('../middleware/authMiddleware');
 const User = require('../models/User');
 
@@ -12,14 +12,8 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
     }
 
-    const isConnected = getIsConnected();
-    let existingUser = null;
-
-    if (isConnected) {
-      existingUser = await User.findOne({ email });
-    } else {
-      existingUser = getStore().users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    }
+    const cleanEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: cleanEmail });
 
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
@@ -29,36 +23,38 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const userId = 'usr-' + Date.now();
-    const newUser = {
+    const newUser = new User({
       _id: userId,
-      name,
-      email,
+      name: name.trim(),
+      email: cleanEmail,
       password: hashedPassword,
       role: 'Admin',
       accountType,
+      status: 'Active',
       phone: '',
       location: 'Solar Array Station',
       notificationsEnabled: true
-    };
+    });
 
-    if (isConnected) {
-      const dbUser = new User(newUser);
-      await dbUser.save();
-    } else {
-      getStore().users.push(newUser);
-    }
+    await newUser.save();
 
-    const token = jwt.sign({ id: userId, email: newUser.email, name: newUser.name, role: newUser.role, accountType: newUser.accountType }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign(
+      { id: newUser._id, email: newUser.email, name: newUser.name, role: newUser.role, accountType: newUser.accountType, status: newUser.status },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.status(201).json({
       success: true,
       token,
       user: {
-        id: userId,
+        id: newUser._id,
+        _id: newUser._id,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
         accountType: newUser.accountType,
+        status: newUser.status,
         phone: newUser.phone,
         location: newUser.location,
         notificationsEnabled: newUser.notificationsEnabled
@@ -77,14 +73,8 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
-    const isConnected = getIsConnected();
-    let user = null;
-
-    if (isConnected) {
-      user = await User.findOne({ email });
-    } else {
-      user = getStore().users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    }
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail });
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });
@@ -95,17 +85,30 @@ const login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials. Password incorrect.' });
     }
 
-    const token = jwt.sign({ id: user._id, email: user.email, name: user.name, role: user.role, accountType: user.accountType }, JWT_SECRET, { expiresIn: '7d' });
+    if (user.status === 'Inactive') {
+      return res.status(403).json({ success: false, message: 'Account is deactivated. Please contact an administrator.' });
+    }
+
+    const userRole = user.role || 'Admin';
+    const userAccountType = user.accountType || 'personal';
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, name: user.name, role: userRole, accountType: userAccountType, status: user.status || 'Active' },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.json({
       success: true,
       token,
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || 'Admin',
-         accountType: user.accountType || '',
+        role: userRole,
+        accountType: userAccountType,
+        status: user.status || 'Active',
         phone: user.phone || '',
         location: user.location || 'Solar Array Station',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
@@ -120,14 +123,7 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const isConnected = getIsConnected();
-    let user = null;
-
-    if (isConnected) {
-      user = await User.findById(userId).select('-password');
-    } else {
-      user = getStore().users.find(u => u._id === userId);
-    }
+    const user = await User.findById(userId).select('-password');
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User profile not found.' });
@@ -137,10 +133,12 @@ const getProfile = async (req, res) => {
       success: true,
       user: {
         id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role || 'Admin',
-        accountType: user.accountType || '',
+        accountType: user.accountType || 'personal',
+        status: user.status || 'Active',
         phone: user.phone || '',
         location: user.location || 'Solar Array Station',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
@@ -156,41 +154,32 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const { name, phone, location, notificationsEnabled } = req.body;
-    const isConnected = getIsConnected();
 
-    if (isConnected) {
-      const user = await User.findByIdAndUpdate(
-        userId,
-        { name, phone, location, notificationsEnabled },
-        { new: true }
-      ).select('-password');
-      return res.json({ success: true, user });
-    } else {
-      const userIndex = getStore().users.findIndex(u => u._id === userId);
-      if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found.' });
-      }
-      getStore().users[userIndex] = {
-        ...getStore().users[userIndex],
-        ...(name && { name }),
-        ...(phone !== undefined && { phone }),
-        ...(location !== undefined && { location }),
-        ...(notificationsEnabled !== undefined && { notificationsEnabled })
-      };
-      const updated = getStore().users[userIndex];
-      return res.json({
-        success: true,
-        user: {
-          id: updated._id,
-          name: updated.name,
-          email: updated.email,
-          role: updated.role,
-          phone: updated.phone,
-          location: updated.location,
-          notificationsEnabled: updated.notificationsEnabled
-        }
-      });
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name, phone, location, notificationsEnabled },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        accountType: user.accountType,
+        status: user.status,
+        phone: user.phone,
+        location: user.location,
+        notificationsEnabled: user.notificationsEnabled
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to update profile: ' + err.message });
   }
@@ -205,14 +194,7 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Both current and new password are required.' });
     }
 
-    const isConnected = getIsConnected();
-    let user = null;
-
-    if (isConnected) {
-      user = await User.findById(userId);
-    } else {
-      user = getStore().users.find(u => u._id === userId);
-    }
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
@@ -224,14 +206,8 @@ const changePassword = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    if (isConnected) {
-      user.password = hashedPassword;
-      await user.save();
-    } else {
-      user.password = hashedPassword;
-    }
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
 
     res.json({ success: true, message: 'Password updated successfully!' });
   } catch (err) {
@@ -240,3 +216,4 @@ const changePassword = async (req, res) => {
 };
 
 module.exports = { register, login, getProfile, updateProfile, changePassword };
+

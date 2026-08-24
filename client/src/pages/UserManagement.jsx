@@ -1,5 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import Toast from '../components/Toast';
+import {
+    fetchUsersApi,
+    createUserApi,
+    updateUserApi,
+    deleteUserApi,
+    updateUserStatusApi
+} from '../services/api';
 
 import {
     Search,
@@ -22,58 +30,17 @@ import {
 } from 'lucide-react';
 
 /* =========================================================
-   INITIAL USERS
-========================================================= */
-
-const initialUsers = [
-    {
-        id: 1,
-        name: 'Arjun Sharma',
-        email: 'arjun@solarix.com',
-        accountType: 'Admin',
-        status: 'Active',
-        joined: '12 Aug 2026'
-    },
-    {
-        id: 2,
-        name: 'Rahul Verma',
-        email: 'rahul@solarix.com',
-        accountType: 'Manager',
-        status: 'Active',
-        joined: '10 Aug 2026'
-    },
-    {
-        id: 3,
-        name: 'Priya Singh',
-        email: 'priya@solarix.com',
-        accountType: 'Operator',
-        status: 'Active',
-        joined: '08 Aug 2026'
-    },
-    {
-        id: 4,
-        name: 'Aman Kumar',
-        email: 'aman@solarix.com',
-        accountType: 'Technician',
-        status: 'Active',
-        joined: '05 Aug 2026'
-    },
-    {
-        id: 5,
-        name: 'Neha Gupta',
-        email: 'neha@solarix.com',
-        accountType: 'Viewer',
-        status: 'Inactive',
-        joined: '02 Aug 2026'
-    }
-];
-
-/* =========================================================
    ROLE STYLES
 ========================================================= */
 
 const roleStyles = {
     Admin: {
+        bg: 'bg-forest-500/15',
+        text: 'text-forest-400',
+        border: 'border-forest-500/20'
+    },
+
+    Administrator: {
         bg: 'bg-forest-500/15',
         text: 'text-forest-400',
         border: 'border-forest-500/20'
@@ -109,7 +76,9 @@ const roleStyles = {
 ========================================================= */
 
 const UserManagement = () => {
-    const [users, setUsers] = useState(initialUsers);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState({ message: '', type: 'info' });
 
     /* Search & Filters */
     const [searchTerm, setSearchTerm] = useState('');
@@ -136,6 +105,32 @@ const UserManagement = () => {
     });
 
     /* =====================================================
+       FETCH USERS FROM MONGODB
+    ===================================================== */
+
+    const loadUsers = async () => {
+        setLoading(true);
+        try {
+            const res = await fetchUsersApi();
+            if (res.data && res.data.success) {
+                setUsers(res.data.users || []);
+            }
+        } catch (err) {
+            console.error('Error fetching users from database:', err);
+            setToast({
+                message: err.response?.data?.message || 'Failed to fetch users from database.',
+                type: 'error'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    /* =====================================================
        FILTER USERS
     ===================================================== */
 
@@ -143,17 +138,19 @@ const UserManagement = () => {
         const search = searchTerm.toLowerCase().trim();
 
         return users.filter((user) => {
-            const matchesSearch =
-                user.name.toLowerCase().includes(search) ||
-                user.email.toLowerCase().includes(search);
+            const nameMatch = user.name ? user.name.toLowerCase().includes(search) : false;
+            const emailMatch = user.email ? user.email.toLowerCase().includes(search) : false;
+            const matchesSearch = nameMatch || emailMatch;
 
+            const userRoleOrType = user.accountType || user.role || 'User';
             const matchesRole =
                 roleFilter === 'All' ||
-                user.accountType === roleFilter;
+                userRoleOrType === roleFilter;
 
+            const userStatus = user.status || 'Active';
             const matchesStatus =
                 statusFilter === 'All' ||
-                user.status === statusFilter;
+                userStatus === statusFilter;
 
             return (
                 matchesSearch &&
@@ -175,7 +172,7 @@ const UserManagement = () => {
     const totalUsers = users.length;
 
     const activeUsers = users.filter(
-        (user) => user.status === 'Active'
+        (user) => (user.status || 'Active') === 'Active'
     ).length;
 
     const inactiveUsers = users.filter(
@@ -183,7 +180,7 @@ const UserManagement = () => {
     ).length;
 
     const adminCount = users.filter(
-        (user) => user.accountType === 'Admin'
+        (user) => user.accountType === 'Admin' || user.accountType === 'Administrator' || user.role === 'Admin' || user.role === 'Administrator'
     ).length;
 
     /* =====================================================
@@ -210,42 +207,59 @@ const UserManagement = () => {
     };
 
     /* =====================================================
-       CREATE USER
+       CREATE USER (PERSIST IN MONGODB)
     ===================================================== */
 
-    const handleCreateUser = (e) => {
-        e.preventDefault();
+    const handleCreateUser = async (e) => {
+    e.preventDefault();
 
-        const newUser = {
-            id: Date.now(),
-
+    try {
+        const payload = {
             name: formData.name.trim(),
-
             email: formData.email.trim(),
-
+            password: formData.password,
+            role: formData.accountType,
             accountType: formData.accountType,
-
-            status: formData.status,
-
-            joined: new Date().toLocaleDateString(
-                'en-GB',
-                {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                }
-            )
+            status: formData.status
         };
 
-        setUsers((prev) => [
-            newUser,
-            ...prev
-        ]);
+        console.log("Creating user with:", payload);
 
-        resetForm();
+        const res = await createUserApi(payload);
 
-        setShowCreateModal(false);
-    };
+        console.log("Create user response:", res.data);
+
+        if (res.data?.success) {
+            setToast({
+                message: 'User created successfully!',
+                type: 'success'
+            });
+
+            resetForm();
+            setShowCreateModal(false);
+
+            await loadUsers();
+        } else {
+            setToast({
+                message: res.data?.message || 'Failed to create user.',
+                type: 'error'
+            });
+        }
+
+    } catch (err) {
+        console.error("CREATE USER ERROR:", err);
+        console.error("STATUS:", err.response?.status);
+        console.error("DATA:", err.response?.data);
+
+        setToast({
+            message:
+                err.response?.data?.message ||
+                err.message ||
+                'Error creating user.',
+            type: 'error'
+        });
+    }
+};
 
     /* =====================================================
        OPEN EDIT MODAL
@@ -255,118 +269,127 @@ const UserManagement = () => {
         setSelectedUser(user);
 
         setFormData({
-            name: user.name,
-            email: user.email,
+            name: user.name || '',
+            email: user.email || '',
             password: '',
-            accountType: user.accountType,
-            status: user.status
+            accountType: user.accountType || user.role || 'Operator',
+            status: user.status || 'Active'
         });
 
         setOpenMenu(null);
-
         setShowEditModal(true);
     };
 
     /* =====================================================
-       UPDATE USER
+       UPDATE USER (PERSIST IN MONGODB)
     ===================================================== */
 
-    const handleUpdateUser = (e) => {
+    const handleUpdateUser = async (e) => {
         e.preventDefault();
 
         if (!selectedUser) {
             return;
         }
 
-        setUsers((prev) =>
-            prev.map((user) =>
-                user.id === selectedUser.id
-                    ? {
-                        ...user,
-                        name: formData.name.trim(),
-                        email: formData.email.trim(),
-                        accountType:
-                            formData.accountType,
-                        status:
-                            formData.status
-                    }
-                    : user
-            )
-        );
+        const userId = selectedUser._id || selectedUser.id;
 
-        setShowEditModal(false);
+        try {
+            const res = await updateUserApi(userId, {
+                name: formData.name.trim(),
+                email: formData.email.trim(),
+                password: formData.password,
+                role: formData.accountType,
+                accountType: formData.accountType,
+                status: formData.status
+            });
 
-        setSelectedUser(null);
-
-        resetForm();
+            if (res.data && res.data.success) {
+                setToast({ message: 'User updated successfully in MongoDB!', type: 'success' });
+                setShowEditModal(false);
+                setSelectedUser(null);
+                resetForm();
+                await loadUsers();
+            } else {
+                setToast({ message: res.data?.message || 'Failed to update user.', type: 'error' });
+            }
+        } catch (err) {
+            setToast({
+                message: err.response?.data?.message || 'Error updating user in database.',
+                type: 'error'
+            });
+        }
     };
 
     /* =====================================================
-       TOGGLE USER STATUS
+       TOGGLE USER STATUS (PERSIST IN MONGODB)
     ===================================================== */
 
-    const toggleStatus = (id) => {
-        setUsers((prev) =>
-            prev.map((user) =>
-                user.id === id
-                    ? {
-                        ...user,
-                        status:
-                            user.status === 'Active'
-                                ? 'Inactive'
-                                : 'Active'
-                    }
-                    : user
-            )
-        );
-
+    const toggleStatus = async (id) => {
         setOpenMenu(null);
+        const user = users.find(u => (u._id === id || u.id === id));
+        if (!user) return;
+
+        const targetId = user._id || user.id;
+        const currentStatus = user.status || 'Active';
+        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+
+        try {
+            const res = await updateUserStatusApi(targetId, newStatus);
+            if (res.data && res.data.success) {
+                setToast({ message: `User status changed to ${newStatus}.`, type: 'success' });
+                await loadUsers();
+            }
+        } catch (err) {
+            setToast({
+                message: err.response?.data?.message || 'Failed to update user status.',
+                type: 'error'
+            });
+        }
     };
 
     /* =====================================================
-       DELETE USER
+       DELETE USER (PERSIST IN MONGODB)
     ===================================================== */
 
-    const deleteUser = (id) => {
-        const user = users.find(
-            (item) => item.id === id
-        );
+    const deleteUser = async (id) => {
+        setOpenMenu(null);
+        const user = users.find(u => (u._id === id || u.id === id));
 
         if (!user) {
             return;
         }
 
-        /*
-         * Prevent deleting the final administrator.
-         */
+        const userRole = user.accountType || user.role;
         if (
-            user.accountType === 'Admin' &&
+            (userRole === 'Admin' || userRole === 'Administrator') &&
             adminCount <= 1
         ) {
-            window.alert(
-                'At least one Admin account must remain.'
-            );
-
-            setOpenMenu(null);
-
+            window.alert('At least one Admin account must remain in the database.');
             return;
         }
 
         const confirmed = window.confirm(
-            `Are you sure you want to delete ${user.name}'s account?`
+            `Are you sure you want to delete ${user.name}'s account from MongoDB?`
         );
 
         if (!confirmed) {
             return;
         }
 
-        setUsers((prev) =>
-            prev.filter(
-                (item) => item.id !== id
-            )
-        );
+        const targetId = user._id || user.id;
 
-        setOpenMenu(null);
+        try {
+            const res = await deleteUserApi(targetId);
+            if (res.data && res.data.success) {
+                setToast({ message: 'User deleted from MongoDB.', type: 'success' });
+                await loadUsers();
+            }
+        } catch (err) {
+            setToast({
+                message: err.response?.data?.message || 'Failed to delete user from database.',
+                type: 'error'
+            });
+        }
     };
 
     /* =====================================================
@@ -767,16 +790,13 @@ const UserManagement = () => {
                                 {filteredUsers.length > 0 ? (
 
                                     filteredUsers.map((user) => {
-
-                                        const roleStyle =
-                                            roleStyles[
-                                                user.accountType
-                                            ] ||
-                                            roleStyles.Viewer;
+                                        const userId = user._id || user.id;
+                                        const userRole = user.accountType || user.role || 'Viewer';
+                                        const roleStyle = roleStyles[userRole] || roleStyles.Viewer;
 
                                         return (
                                             <tr
-                                                key={user.id}
+                                                key={userId}
                                                 className="
                                                     border-b
                                                     border-[#E5E1DB]
@@ -879,7 +899,7 @@ const UserManagement = () => {
                                                             "
                                                         />
 
-                                                        {user.accountType}
+                                                        {userRole}
 
                                                     </span>
 
@@ -977,10 +997,9 @@ const UserManagement = () => {
                                                             type="button"
                                                             onClick={() =>
                                                                 setOpenMenu(
-                                                                    openMenu ===
-                                                                        user.id
+                                                                    openMenu === userId
                                                                         ? null
-                                                                        : user.id
+                                                                        : userId
                                                                 )
                                                             }
                                                             className="
@@ -1006,8 +1025,7 @@ const UserManagement = () => {
                                                             />
                                                         </button>
 
-                                                        {openMenu ===
-                                                            user.id && (
+                                                        {openMenu === userId && (
 
                                                             <div
                                                                 className="
@@ -1069,7 +1087,7 @@ const UserManagement = () => {
                                                                     type="button"
                                                                     onClick={() =>
                                                                         toggleStatus(
-                                                                            user.id
+                                                                            userId
                                                                         )
                                                                     }
                                                                     className="
@@ -1117,7 +1135,7 @@ const UserManagement = () => {
                                                                     type="button"
                                                                     onClick={() =>
                                                                         deleteUser(
-                                                                            user.id
+                                                                            userId
                                                                         )
                                                                     }
                                                                     className="
@@ -1318,6 +1336,12 @@ const UserManagement = () => {
                     submitText="Save Changes"
                 />
             )}
+
+            <Toast
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast({ message: '', type: 'info' })}
+            />
 
         </div>
     );
