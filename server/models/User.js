@@ -5,8 +5,17 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'User' },
-  accountType: { type: String, default: 'personal' },
+  role: { 
+    type: String, 
+    enum: ['Admin', 'Manager', 'Operator', 'Technician', 'Viewer', 'Personal', 'User', 'Administrator'], 
+    default: 'Admin' 
+  },
+  accountType: { 
+    type: String, 
+    enum: ['personal', 'business', 'organisation', 'enterprise'], 
+    default: 'personal' 
+  },
+  organizationId: { type: String, default: null, index: true },
   status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
   createdBy: {
     type: String,
@@ -29,7 +38,7 @@ const userSchema = new mongoose.Schema({
   batteryType: { type: String, default: '' },
   gridConnected: { type: String, default: '' },
 
-  // Business / Enterprise
+  // Business / Enterprise / Organisation
   organizationName: { type: String, default: '' },
   industry: { type: String, default: '' },
   solarSites: { type: String, default: '' },

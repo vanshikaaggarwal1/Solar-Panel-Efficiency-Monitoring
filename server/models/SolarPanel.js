@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const solarPanelSchema = new mongoose.Schema({
   _id: { type: String },
   panelId: { type: String, required: true, unique: true, index: true },
+  organizationId: { type: String, default: null, index: true },
+  userId: { type: String, default: null, index: true },
   model: { type: String, required: true },
   type: { type: String, required: true },
   status: { type: String, enum: ['Active', 'Degraded', 'Offline', 'Maintenance'], default: 'Active', index: true },

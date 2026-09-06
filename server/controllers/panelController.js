@@ -1,7 +1,7 @@
 const { getStore, getIsConnected } = require('../config/db');
 const SolarPanel = require('../models/SolarPanel');
 
-// Get all panels with search, filter, and sort
+// Compute dynamic metrics
 const computeDynamicPanelMetrics = (panelObj) => {
   if (!panelObj) return panelObj;
   const p = typeof panelObj.toObject === 'function' ? panelObj.toObject() : { ...panelObj };
@@ -23,15 +23,35 @@ const computeDynamicPanelMetrics = (panelObj) => {
   };
 };
 
+// Helper for building organization / personal scope filter
+const getScopeFilter = (user) => {
+  if (!user) return {};
+  if (user.accountType === 'personal' || !user.organizationId) {
+    return {
+      $or: [
+        { userId: user.id },
+        { userId: null, organizationId: null }
+      ]
+    };
+  }
+  return {
+    $or: [
+      { organizationId: user.organizationId },
+      { organizationId: null, userId: null }
+    ]
+  };
+};
+
 // Get all panels with search, filter, and sort
 const getPanels = async (req, res) => {
   try {
     const { search, status, location, sortBy, sortOrder } = req.query;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
     let panels = [];
 
     if (isConnected) {
-      let query = {};
+      let query = { ...scopeFilter };
       if (status && status !== 'All') {
         query.status = status;
       }
@@ -39,11 +59,18 @@ const getPanels = async (req, res) => {
         query.location = { $regex: location, $options: 'i' };
       }
       if (search) {
-        query.$or = [
-          { panelId: { $regex: search, $options: 'i' } },
-          { model: { $regex: search, $options: 'i' } },
-          { location: { $regex: search, $options: 'i' } }
+        query.$and = [
+          scopeFilter,
+          {
+            $or: [
+              { panelId: { $regex: search, $options: 'i' } },
+              { model: { $regex: search, $options: 'i' } },
+              { location: { $regex: search, $options: 'i' } }
+            ]
+          }
         ];
+        delete query.organizationId;
+        delete query.userId;
       }
 
       let sortOptions = {};
@@ -99,10 +126,16 @@ const getPanelById = async (req, res) => {
   try {
     const { id } = req.params;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
     let panel = null;
 
     if (isConnected) {
-      panel = await SolarPanel.findOne({ $or: [{ _id: id }, { panelId: id }] });
+      panel = await SolarPanel.findOne({
+        $and: [
+          scopeFilter,
+          { $or: [{ _id: id }, { panelId: id }] }
+        ]
+      });
     } else {
       panel = getStore().solarPanels.find(p => p._id === id || p.panelId === id);
     }
@@ -126,7 +159,6 @@ const createPanel = async (req, res) => {
     }
 
     const isConnected = getIsConnected();
-
     const areaM2 = parseFloat(panelAreaM2 || panelArea || area || 16.64);
     const voltVal = parseFloat(voltageV || req.body.ratedVoltageV || 48.0);
     const currVal = parseFloat(currentA || req.body.ratedCurrentA || 80.0);
@@ -140,6 +172,8 @@ const createPanel = async (req, res) => {
     const newPanelData = {
       _id: panelId,
       panelId,
+      organizationId: req.user.organizationId || null,
+      userId: req.user.id,
       model,
       type,
       status: status || 'Active',
@@ -181,11 +215,21 @@ const updatePanel = async (req, res) => {
   try {
     const { id } = req.params;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
 
     if (isConnected) {
-      const updated = await SolarPanel.findOneAndUpdate({ $or: [{ _id: id }, { panelId: id }] }, req.body, { new: true });
+      const updated = await SolarPanel.findOneAndUpdate(
+        {
+          $and: [
+            scopeFilter,
+            { $or: [{ _id: id }, { panelId: id }] }
+          ]
+        },
+        req.body,
+        { new: true }
+      );
       if (!updated) {
-        return res.status(404).json({ success: false, message: 'Panel not found for update.' });
+        return res.status(404).json({ success: false, message: 'Panel not found or access denied.' });
       }
       return res.json({ success: true, data: computeDynamicPanelMetrics(updated) });
     } else {
@@ -206,9 +250,18 @@ const deletePanel = async (req, res) => {
   try {
     const { id } = req.params;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
 
     if (isConnected) {
-      await SolarPanel.findOneAndDelete({ $or: [{ _id: id }, { panelId: id }] });
+      const deleted = await SolarPanel.findOneAndDelete({
+        $and: [
+          scopeFilter,
+          { $or: [{ _id: id }, { panelId: id }] }
+        ]
+      });
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'Panel not found or access denied.' });
+      }
       return res.json({ success: true, message: 'Solar panel removed successfully.' });
     } else {
       const index = getStore().solarPanels.findIndex(p => p._id === id || p.panelId === id);

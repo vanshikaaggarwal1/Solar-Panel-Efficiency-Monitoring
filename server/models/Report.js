@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
   _id: { type: String },
+  organizationId: { type: String, default: null, index: true },
+  userId: { type: String, default: null, index: true },
   title: { type: String, required: true },
   period: { type: String, enum: ['Day', 'Week', 'Month', 'Year'], required: true },
   periodRange: { type: String, required: true },

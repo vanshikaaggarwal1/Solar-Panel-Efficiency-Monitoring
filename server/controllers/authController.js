@@ -3,13 +3,23 @@ const bcrypt = require('bcryptjs');
 const { getIsConnected } = require('../config/db');
 const { JWT_SECRET } = require('../middleware/authMiddleware');
 const User = require('../models/User');
+const Organization = require('../models/Organization');
+
+// Helper to normalize account type string
+const normalizeAccountType = (type) => {
+  if (!type) return 'personal';
+  const lower = type.toLowerCase();
+  if (lower === 'enterprise' || lower === 'organisation' || lower === 'organization') return 'organisation';
+  if (lower === 'business') return 'business';
+  return 'personal';
+};
 
 // Register User
 const register = async (req, res) => {
   try {
-    const { name, email, password, accountType } = req.body;
-    if (!name || !email || !password || !accountType) {
-      return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
+    const { name, email, password, accountType: rawAccountType, organizationName, industry, solarSites, totalCapacity, users } = req.body;
+    if (!name || !email || !password || !rawAccountType) {
+      return res.status(400).json({ success: false, message: 'Please provide all required fields (name, email, password, accountType).' });
     }
 
     const cleanEmail = email.toLowerCase().trim();
@@ -19,30 +29,63 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
     }
 
+    const accountType = normalizeAccountType(rawAccountType);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
     const userId = 'usr-' + Date.now();
+
+    let organizationId = null;
+    let role = 'Admin';
+
+    if (accountType === 'business' || accountType === 'organisation') {
+      const orgName = (organizationName && organizationName.trim()) || `${name.trim()}'s Organization`;
+      const newOrg = new Organization({
+        _id: 'org-' + Date.now() + Math.random().toString(36).substring(2, 6),
+        name: orgName,
+        type: accountType,
+        industry: industry || '',
+        solarSites: solarSites || '1',
+        totalCapacity: totalCapacity || '',
+        usersCount: users || '1-5',
+        createdBy: userId
+      });
+      await newOrg.save();
+      organizationId = newOrg._id;
+      role = 'Admin';
+    } else {
+      // Personal user account
+      organizationId = null;
+      role = 'Personal';
+    }
+
     const newUser = new User({
       _id: userId,
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
-      role: 'Admin',
+      role,
       accountType,
+      organizationId,
       status: 'Active',
-      phone: '',
-      location: 'Solar Array Station',
+      organizationName: organizationName || '',
+      phone: req.body.phone || '',
+      location: req.body.location || 'Solar Array Station',
       notificationsEnabled: true
     });
 
     await newUser.save();
 
-    const token = jwt.sign(
-      { id: newUser._id, email: newUser.email, name: newUser.name, role: newUser.role, accountType: newUser.accountType, status: newUser.status },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const tokenPayload = {
+      id: newUser._id,
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+      accountType: newUser.accountType,
+      organizationId: newUser.organizationId,
+      status: newUser.status
+    };
+
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
       success: true,
@@ -54,9 +97,11 @@ const register = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         accountType: newUser.accountType,
+        organizationId: newUser.organizationId,
         status: newUser.status,
         phone: newUser.phone,
         location: newUser.location,
+        organizationName: newUser.organizationName,
         notificationsEnabled: newUser.notificationsEnabled
       }
     });
@@ -89,14 +134,21 @@ const login = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Account is deactivated. Please contact an administrator.' });
     }
 
-    const userRole = user.role || 'Admin';
-    const userAccountType = user.accountType || 'personal';
+    const userAccountType = normalizeAccountType(user.accountType);
+    const userRole = user.role || (userAccountType === 'personal' ? 'Personal' : 'Admin');
+    const userOrgId = user.organizationId || null;
 
-    const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name, role: userRole, accountType: userAccountType, status: user.status || 'Active' },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const tokenPayload = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: userRole,
+      accountType: userAccountType,
+      organizationId: userOrgId,
+      status: user.status || 'Active'
+    };
+
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
       success: true,
@@ -108,9 +160,11 @@ const login = async (req, res) => {
         email: user.email,
         role: userRole,
         accountType: userAccountType,
+        organizationId: userOrgId,
         status: user.status || 'Active',
         phone: user.phone || '',
         location: user.location || 'Solar Array Station',
+        organizationName: user.organizationName || '',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
       }
     });
@@ -129,6 +183,10 @@ const getProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User profile not found.' });
     }
 
+    const userAccountType = normalizeAccountType(user.accountType);
+    const userRole = user.role || (userAccountType === 'personal' ? 'Personal' : 'Admin');
+    const userOrgId = user.organizationId || null;
+
     res.json({
       success: true,
       user: {
@@ -136,11 +194,13 @@ const getProfile = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role || 'Admin',
-        accountType: user.accountType || 'personal',
+        role: userRole,
+        accountType: userAccountType,
+        organizationId: userOrgId,
         status: user.status || 'Active',
         phone: user.phone || '',
         location: user.location || 'Solar Array Station',
+        organizationName: user.organizationName || '',
         notificationsEnabled: user.notificationsEnabled !== undefined ? user.notificationsEnabled : true
       }
     });
@@ -174,9 +234,11 @@ const updateProfile = async (req, res) => {
         email: user.email,
         role: user.role,
         accountType: user.accountType,
+        organizationId: user.organizationId,
         status: user.status,
         phone: user.phone,
         location: user.location,
+        organizationName: user.organizationName,
         notificationsEnabled: user.notificationsEnabled
       }
     });
@@ -216,4 +278,3 @@ const changePassword = async (req, res) => {
 };
 
 module.exports = { register, login, getProfile, updateProfile, changePassword };
-

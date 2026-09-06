@@ -64,8 +64,34 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('solar_user', JSON.stringify(updatedUser));
   };
 
+  const hasRole = (allowedRoles = []) => {
+    if (!user) return false;
+    if (user.accountType === 'personal') return true;
+    const currentRole = user.role || 'Viewer';
+    return allowedRoles.some(r => r.toLowerCase() === currentRole.toLowerCase());
+  };
+
+  const isAccountType = (allowedTypes = []) => {
+    if (!user) return false;
+    const currentType = (user.accountType || 'personal').toLowerCase();
+    return allowedTypes.some(t => t.toLowerCase() === currentType);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, loading, login, register, logout, updateUserProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!token,
+        loading,
+        login,
+        register,
+        logout,
+        updateUserProfile,
+        hasRole,
+        isAccountType
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

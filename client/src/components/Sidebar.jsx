@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useAlerts } from '../context/AlertContext';
 import {
   LayoutDashboard,
   Grid,
@@ -11,37 +13,90 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  Sun,
   ShieldCheck
 } from 'lucide-react';
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem('solar_user') || '{}');
-  const accountType = user.accountType || 'Operator';
-  const canManageUsers =
-    (user?.accountType === "business" || user?.accountType === "enterprise") &&
-    user?.role === "Admin";
+  const { user } = useAuth();
+  const { activeCount } = useAlerts() || { activeCount: 0 };
 
-  const navigationItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Panels', path: '/monitoring', icon: Grid },
-    { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-    { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: 3 },
-    { name: 'Maintenance', path: '/maintenance', icon: Wrench },
-    { name: 'Reports', path: '/reports', icon: FileText },
-    ...(canManageUsers
-      ? [{ name: 'Users', path: '/users', icon: User }]
-      : []),
-    { name: 'Settings', path: '/profile', icon: Settings },
-  ];
+  const accountType = (user?.accountType || 'personal').toLowerCase();
+  const role = user?.role || (accountType === 'personal' ? 'Personal' : 'Viewer');
 
+  // Build dynamic navigation items based on accountType and role
+  const getNavigationItems = () => {
+    if (accountType === 'personal') {
+      return [
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { name: 'My Panels', path: '/monitoring', icon: Grid },
+        { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+        { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: activeCount > 0 ? activeCount : null },
+        { name: 'Maintenance', path: '/maintenance', icon: Wrench },
+        { name: 'Settings', path: '/profile', icon: Settings }
+      ];
+    }
+
+    // Business & Organisation Accounts (Role Matrix)
+    switch (role) {
+      case 'Admin':
+        return [
+          { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+          { name: 'Panels', path: '/monitoring', icon: Grid },
+          { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+          { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: activeCount > 0 ? activeCount : null },
+          { name: 'Maintenance', path: '/maintenance', icon: Wrench },
+          { name: 'Users', path: '/users', icon: User },
+          { name: 'Settings', path: '/profile', icon: Settings }
+        ];
+
+      case 'Manager':
+        return [
+          { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+          { name: 'Panels', path: '/monitoring', icon: Grid },
+          { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+          { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: activeCount > 0 ? activeCount : null },
+          { name: 'Maintenance', path: '/maintenance', icon: Wrench },
+          { name: 'Reports', path: '/reports', icon: FileText },
+          { name: 'Settings', path: '/profile', icon: Settings }
+        ];
+
+      case 'Operator':
+        return [
+          { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+          { name: 'Panels', path: '/monitoring', icon: Grid },
+          { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: activeCount > 0 ? activeCount : null },
+          { name: 'Settings', path: '/profile', icon: Settings }
+        ];
+
+      case 'Technician':
+        return [
+          { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+          { name: 'Panels', path: '/monitoring', icon: Grid },
+          { name: 'Alerts', path: '/alerts', icon: AlertTriangle, badge: activeCount > 0 ? activeCount : null },
+          { name: 'Maintenance', path: '/maintenance', icon: Wrench },
+          { name: 'Settings', path: '/profile', icon: Settings }
+        ];
+
+      case 'Viewer':
+      default:
+        return [
+          { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+          { name: 'Panels', path: '/monitoring', icon: Grid },
+          { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+          { name: 'Settings', path: '/profile', icon: Settings }
+        ];
+    }
+  };
+
+  const navigationItems = getNavigationItems();
 
   return (
     <aside
-      className={`hidden lg:flex flex-col bg-[#1F1F1F] text-slate-300 border-r border-[#2A2A2A] transition-all duration-200 relative z-30 ${collapsed ? 'w-16' : 'w-60'
-        }`}
+      className={`hidden lg:flex flex-col bg-[#1F1F1F] text-slate-300 border-r border-[#2A2A2A] transition-all duration-200 relative z-30 ${
+        collapsed ? 'w-16' : 'w-60'
+      }`}
     >
       {/* Collapse/Expand Toggle Button */}
       <button
@@ -52,32 +107,20 @@ const Sidebar = () => {
         {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
       </button>
 
-      {/* Brand Logo Header */}
-      {/* <div className="h-16 px-4 flex items-center gap-3 border-b border-[#2A2A2A] overflow-hidden">
-        <div className="w-8 h-8 rounded-lg bg-forest-500 text-white flex items-center justify-center flex-shrink-0 font-bold text-sm">
-          <Sun className="w-4 h-4 text-sand-400" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm text-white tracking-tight">Solarix Systems</span>
-            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Enterprise IoT</span>
-          </div>
-        )}
-      </div> */}
-      {/* Account Type */}
+      {/* Account Type & Role Indicator */}
       {!collapsed && (
         <div className="px-4 py-3 border-b border-[#2A2A2A]">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#2A2A2A] flex items-center justify-center ">
+            <div className="w-7 h-7 rounded-lg bg-[#2A2A2A] flex items-center justify-center">
               <ShieldCheck className="w-3.5 h-3.5 text-sand-400" />
             </div>
 
             <div className="flex flex-col min-w-0">
               <span className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
-                Account Type
+                {accountType} Account
               </span>
               <span className="text-[11px] text-white font-semibold truncate capitalize">
-                {accountType}
+                {role} Role
               </span>
             </div>
           </div>
@@ -99,10 +142,11 @@ const Sidebar = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${isActive
-                ? 'bg-forest-500 text-white font-semibold'
-                : 'text-slate-400 hover:text-white hover:bg-[#2A2A2A]'
-                }`}
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                isActive
+                  ? 'bg-forest-500 text-white font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-[#2A2A2A]'
+              }`}
               title={collapsed ? item.name : undefined}
             >
               <div className="flex items-center gap-3">
@@ -110,8 +154,11 @@ const Sidebar = () => {
                 {!collapsed && <span>{item.name}</span>}
               </div>
               {!collapsed && item.badge && (
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-copper-500/20 text-copper-500'
-                  }`}>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}
+                >
                   {item.badge}
                 </span>
               )}
@@ -120,7 +167,7 @@ const Sidebar = () => {
         })}
       </nav>
 
-      {/* Bottom Substation Status */}
+      {/* Bottom Telemetry Status */}
       {!collapsed && (
         <div className="p-3 m-3 rounded-xl bg-[#262626] border border-[#333333] text-xs space-y-1.5">
           <div className="flex items-center justify-between">
@@ -130,7 +177,7 @@ const Sidebar = () => {
             <span className="text-[10px] text-forest-500 font-bold bg-forest-500/15 px-1.5 py-0.5 rounded">ONLINE</span>
           </div>
           <p className="text-[10px] text-slate-400 leading-tight">
-            Grid Synchronization Active • 8 Arrays Monitored
+            Grid Synchronization Active • Solarix RBAC Guarded
           </p>
         </div>
       )}

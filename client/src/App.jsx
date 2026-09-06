@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AlertProvider } from './context/AlertContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 
@@ -21,87 +22,93 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <div className="flex-1">
-              <Routes>
-                {/* Public Pages */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+        <AlertProvider>
+          <Router>
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <div className="flex-1">
+                <Routes>
+                  {/* Public Pages */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
 
-                {/* Protected Dashboard & Operations Pages */}
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/monitoring"
-                  element={
-                    <ProtectedRoute>
-                      <MonitoringPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ProtectedRoute>
-                      <AnalyticsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/alerts"
-                  element={
-                    <ProtectedRoute>
-                      <AlertsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/maintenance"
-                  element={
-                    <ProtectedRoute>
-                      <MaintenancePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports"
-                  element={
-                    <ProtectedRoute>
-                      <ReportsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/users"
-                  element={
-                    <ProtectedRoute>
-                      <UserManagement />
-                    </ProtectedRoute>
-                  } />
+                  {/* Protected Dashboard & Operations Pages */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/monitoring"
+                    element={
+                      <ProtectedRoute>
+                        <MonitoringPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/analytics"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin', 'Manager', 'Viewer', 'Personal']}>
+                        <AnalyticsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/alerts"
+                    element={
+                      <ProtectedRoute>
+                        <AlertsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/maintenance"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin', 'Manager', 'Operator', 'Technician', 'Personal']}>
+                        <MaintenancePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/reports"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin', 'Manager', 'Viewer']}>
+                        <ReportsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/users"
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={['Admin']}
+                        allowedAccountTypes={['business', 'organisation', 'enterprise']}
+                      >
+                        <UserManagement />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
             </div>
-          </div>
-        </Router>
+          </Router>
+        </AlertProvider>
       </AuthProvider>
     </ThemeProvider>
   );

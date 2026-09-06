@@ -1,15 +1,34 @@
 const { getStore, getIsConnected } = require('../config/db');
 const Alert = require('../models/Alert');
 
-// Get all alerts with status/severity filters
+const getScopeFilter = (user) => {
+  if (!user) return {};
+  if (user.accountType === 'personal' || !user.organizationId) {
+    return {
+      $or: [
+        { userId: user.id },
+        { userId: null, organizationId: null }
+      ]
+    };
+  }
+  return {
+    $or: [
+      { organizationId: user.organizationId },
+      { organizationId: null, userId: null }
+    ]
+  };
+};
+
+// Get all alerts with status/severity filters & scoping
 const getAlerts = async (req, res) => {
   try {
     const { status, severity } = req.query;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
     let data = [];
 
     if (isConnected) {
-      let query = {};
+      let query = { ...scopeFilter };
       if (status && status !== 'All') query.status = status;
       if (severity && severity !== 'All') query.severity = severity;
       data = await Alert.find(query).sort({ createdAt: -1 });
@@ -39,15 +58,21 @@ const updateAlertStatus = async (req, res) => {
     }
 
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
 
     if (isConnected) {
       const updated = await Alert.findOneAndUpdate(
-        { $or: [{ _id: id }, { _id: id }] },
+        {
+          $and: [
+            scopeFilter,
+            { _id: id }
+          ]
+        },
         { status },
         { new: true }
       );
       if (!updated) {
-        return res.status(404).json({ success: false, message: 'Alert not found.' });
+        return res.status(404).json({ success: false, message: 'Alert not found or access denied.' });
       }
       return res.json({ success: true, data: updated });
     } else {
@@ -74,6 +99,8 @@ const createAlert = async (req, res) => {
     const newAlert = {
       _id: 'ALT-' + Date.now().toString().slice(-6),
       panelId: panelId || 'SP-101',
+      organizationId: req.user ? req.user.organizationId || null : null,
+      userId: req.user ? req.user.id : null,
       type: type || 'Sensor Failure',
       severity: severity || 'Warning',
       description: description || 'Anomaly detected during sensor routine telemetry scan.',

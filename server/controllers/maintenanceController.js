@@ -2,14 +2,33 @@ const { getStore, getIsConnected } = require('../config/db');
 const Maintenance = require('../models/Maintenance');
 const SolarPanel = require('../models/SolarPanel');
 
-// Get all maintenance tickets
+const getScopeFilter = (user) => {
+  if (!user) return {};
+  if (user.accountType === 'personal' || !user.organizationId) {
+    return {
+      $or: [
+        { userId: user.id },
+        { userId: null, organizationId: null }
+      ]
+    };
+  }
+  return {
+    $or: [
+      { organizationId: user.organizationId },
+      { organizationId: null, userId: null }
+    ]
+  };
+};
+
+// Get all maintenance tickets with scope filtering
 const getMaintenance = async (req, res) => {
   try {
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
     let records = [];
 
     if (isConnected) {
-      records = await Maintenance.find().sort({ createdAt: -1 });
+      records = await Maintenance.find(scopeFilter).sort({ createdAt: -1 });
     } else {
       records = [...getStore().maintenanceRecords];
     }
@@ -32,6 +51,8 @@ const createMaintenance = async (req, res) => {
     const newRecord = {
       _id: 'MNT-' + Math.floor(1000 + Math.random() * 9000),
       panelId,
+      organizationId: req.user ? req.user.organizationId || null : null,
+      userId: req.user ? req.user.id : null,
       issue,
       assignedEngineer,
       status: status || 'Scheduled',
@@ -66,6 +87,7 @@ const updateMaintenance = async (req, res) => {
     const { id } = req.params;
     const { status, assignedEngineer, notes, completedDate } = req.body;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
 
     const updatePayload = {
       ...(status && { status }),
@@ -76,13 +98,18 @@ const updateMaintenance = async (req, res) => {
 
     if (isConnected) {
       const updated = await Maintenance.findOneAndUpdate(
-        { $or: [{ _id: id }, { _id: id }] },
+        {
+          $and: [
+            scopeFilter,
+            { _id: id }
+          ]
+        },
         updatePayload,
         { new: true }
       );
 
       if (!updated) {
-        return res.status(404).json({ success: false, message: 'Maintenance record not found.' });
+        return res.status(404).json({ success: false, message: 'Maintenance record not found or access denied.' });
       }
 
       if (status === 'Completed') {
@@ -108,9 +135,18 @@ const deleteMaintenance = async (req, res) => {
   try {
     const { id } = req.params;
     const isConnected = getIsConnected();
+    const scopeFilter = getScopeFilter(req.user);
 
     if (isConnected) {
-      await Maintenance.findOneAndDelete({ $or: [{ _id: id }, { _id: id }] });
+      const deleted = await Maintenance.findOneAndDelete({
+        $and: [
+          scopeFilter,
+          { _id: id }
+        ]
+      });
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'Record not found or access denied.' });
+      }
       return res.json({ success: true, message: 'Maintenance record deleted.' });
     } else {
       const index = getStore().maintenanceRecords.findIndex(m => m._id === id);

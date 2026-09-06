@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const alertSchema = new mongoose.Schema({
   _id: { type: String },
   panelId: { type: String, required: true, index: true },
+  organizationId: { type: String, default: null, index: true },
+  userId: { type: String, default: null, index: true },
   type: { type: String, required: true },
   severity: { type: String, enum: ['Critical', 'Warning', 'Info'], default: 'Warning', index: true },
   description: { type: String, required: true },
