@@ -91,25 +91,25 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
+    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1400px] mx-auto space-y-6">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
               System Settings & Operator Profile
             </h1>
-            <p className="text-xs text-secondaryText mt-0.5">
+            <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
               Manage security credentials, telemetry refresh preferences, and notification webhooks
             </p>
           </div>
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-rose-500/20 text-rose-600 hover:bg-rose-500/10 font-semibold text-xs transition-colors self-start sm:self-auto"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[#E5E7EB] dark:border-[#283038] text-[#111827] dark:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#1E242B] font-semibold text-xs transition-colors self-start sm:self-auto"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -117,7 +117,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-borderNeutral dark:border-[#262626] text-xs">
+        <div className="flex items-center gap-2 border-b border-[#E5E7EB] dark:border-[#283038] text-xs overflow-x-auto">
           {[
             { id: 'profile', label: 'Operator Details', icon: User },
             { id: 'preferences', label: 'System Preferences', icon: Sliders },
@@ -130,10 +130,10 @@ const ProfilePage = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 font-semibold transition-colors border-b-2 ${
+                className={`flex items-center gap-2 px-4 py-2.5 font-semibold transition-colors border-b-2 whitespace-nowrap ${
                   isActive
-                    ? 'border-forest-500 text-forest-500'
-                    : 'border-transparent text-secondaryText hover:text-primaryText'
+                    ? 'border-[#1B3D3D] text-[#1B3D3D] dark:border-[#D5E5F2] dark:text-[#D5E5F2]'
+                    : 'border-transparent text-[#6B7280] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

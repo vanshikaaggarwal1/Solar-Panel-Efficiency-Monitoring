@@ -133,7 +133,7 @@ const HomePage = () => {
   const techBadges = ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Chart.js', 'JWT'];
 
   return (
-    <div className="min-h-screen flex flex-col bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors selection:bg-forest-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
 
       {/* ================= 1. HERO SECTION (#home) ================= */}
       <section id="home" className="relative overflow-hidden px-4 sm:px-6 lg:px-8 pt-16 pb-24 text-center scroll-mt-20">
@@ -148,13 +148,13 @@ const HomePage = () => {
         </video>
 
         {/* Layered Dark Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-warmBg dark:to-[#121212]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-white dark:to-[#121212]" />
 
         <div className="relative z-10 max-w-7xl mx-auto space-y-12 animate-fade-in-up">
           {/* Top Small Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-forest-500/20 border border-forest-500/40 text-emerald-300 font-semibold text-xs mx-auto backdrop-blur-md shadow-subtle tracking-wide uppercase">
-            <Sun className="w-3.5 h-3.5 text-sand-400" />
-            <span>Enterprise Solar Intelligence</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1B3D3D]/30 border border-[#1B3D3D]/50 text-white font-semibold text-xs mx-auto backdrop-blur-md shadow-subtle tracking-wide uppercase">
+            <Sun className="w-3.5 h-3.5 text-[#D5E5F2]" />
+            <span>Solarix Solar Intelligence</span>
           </div>
 
           {/* Heading & Subtitle */}
@@ -171,7 +171,7 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/dashboard"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 glow-forest"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#1B3D3D] dark:bg-[#D5E5F2] hover:opacity-90 text-white dark:text-[#121212] font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
             >
               <span>Access Live Console</span>
               <ArrowRight className="w-4 h-4" />

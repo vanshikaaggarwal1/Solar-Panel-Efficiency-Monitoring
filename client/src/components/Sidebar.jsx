@@ -93,95 +93,137 @@ const Sidebar = () => {
   const navigationItems = getNavigationItems();
 
   return (
-    <aside
-      className={`hidden lg:flex flex-col bg-[#1F1F1F] text-slate-300 border-r border-[#2A2A2A] transition-all duration-200 relative z-30 ${
-        collapsed ? 'w-16' : 'w-60'
-      }`}
-    >
-      {/* Collapse/Expand Toggle Button */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-[#1F1F1F] text-slate-400 border border-[#333333] flex items-center justify-center shadow-subtle hover:text-white transition-colors"
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+    <>
+      {/* =========================================================
+          DESKTOP SIDEBAR NAVIGATION (Large Screens: lg and up)
+      ========================================================= */}
+      <aside
+        className={`hidden lg:flex flex-col bg-white dark:bg-[#121212] text-[#111827] dark:text-white border-r border-[#E5E7EB] dark:border-[#283038] transition-all duration-200 relative z-30 ${
+          collapsed ? 'w-16' : 'w-60'
+        }`}
       >
-        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-      </button>
+        {/* Collapse/Expand Toggle Button */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-white dark:bg-[#1E242B] text-[#6B7280] dark:text-slate-300 border border-[#E5E7EB] dark:border-[#283038] flex items-center justify-center shadow-subtle hover:text-[#1B3D3D] dark:hover:text-[#D5E5F2] transition-colors"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
 
-      {/* Account Type & Role Indicator */}
-      {!collapsed && (
-        <div className="px-4 py-3 border-b border-[#2A2A2A]">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#2A2A2A] flex items-center justify-center">
-              <ShieldCheck className="w-3.5 h-3.5 text-sand-400" />
-            </div>
-
-            <div className="flex flex-col min-w-0">
-              <span className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold">
-                {accountType} Account
-              </span>
-              <span className="text-[11px] text-white font-semibold truncate capitalize">
-                {role} Role
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Navigation Menu */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {/* Account Type & Role Indicator */}
         {!collapsed && (
-          <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Platform Menu
+          <div className="px-4 py-3 border-b border-[#E5E7EB] dark:border-[#283038]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-[#F3F4F6] dark:bg-[#1E242B] flex items-center justify-center">
+                <ShieldCheck className="w-4 h-4 text-[#1B3D3D] dark:text-[#D5E5F2]" />
+              </div>
+
+              <div className="flex flex-col min-w-0">
+                <span className="text-[9px] uppercase tracking-wider text-[#6B7280] dark:text-slate-400 font-semibold">
+                  {accountType} Account
+                </span>
+                <span className="text-[11px] text-[#111827] dark:text-white font-semibold truncate capitalize">
+                  {role} Role
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
-                isActive
-                  ? 'bg-forest-500 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-[#2A2A2A]'
-              }`}
-              title={collapsed ? item.name : undefined}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-sand-400' : 'text-slate-400'}`} />
-                {!collapsed && <span>{item.name}</span>}
-              </div>
-              {!collapsed && item.badge && (
-                <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
+        {/* Navigation Menu Links */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {!collapsed && (
+            <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
+              Platform Menu
+            </div>
+          )}
 
-      {/* Bottom Telemetry Status */}
-      {!collapsed && (
-        <div className="p-3 m-3 rounded-xl bg-[#262626] border border-[#333333] text-xs space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-forest-500"></span> Substation Telemetry
-            </span>
-            <span className="text-[10px] text-forest-500 font-bold bg-forest-500/15 px-1.5 py-0.5 rounded">ONLINE</span>
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                  isActive
+                    ? 'bg-[#1B3D3D] text-white font-semibold dark:bg-[#D5E5F2] dark:text-[#121212]'
+                    : 'text-[#6B7280] dark:text-slate-300 hover:text-[#111827] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#1E242B]'
+                }`}
+                title={collapsed ? item.name : undefined}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white dark:text-[#121212]' : 'text-[#6B7280] dark:text-slate-400'}`} />
+                  {!collapsed && <span>{item.name}</span>}
+                </div>
+                {!collapsed && item.badge && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white dark:bg-[#121212]/20 dark:text-[#121212]'
+                        : 'bg-[#F3F4F6] dark:bg-[#1E242B] text-[#1B3D3D] dark:text-[#D5E5F2] border border-[#E5E7EB] dark:border-[#283038]'
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Telemetry Status Footer */}
+        {!collapsed && (
+          <div className="p-3 m-3 rounded-xl bg-[#F9FAFB] dark:bg-[#1E242B] border border-[#E5E7EB] dark:border-[#283038] text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-[#6B7280] dark:text-slate-300 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#1B3D3D] dark:bg-[#D5E5F2]"></span> Telemetry
+              </span>
+              <span className="text-[10px] text-[#1B3D3D] dark:text-[#D5E5F2] font-bold px-1.5 py-0.5 rounded bg-[#1B3D3D]/10 dark:bg-[#D5E5F2]/15">
+                ONLINE
+              </span>
+            </div>
+            <p className="text-[10px] text-[#6B7280] dark:text-slate-400 leading-tight">
+              Grid Sync Active • Solarix System
+            </p>
           </div>
-          <p className="text-[10px] text-slate-400 leading-tight">
-            Grid Synchronization Active • Solarix RBAC Guarded
-          </p>
+        )}
+      </aside>
+
+      {/* =========================================================
+          MOBILE BOTTOM NAVIGATION BAR (Small Screens: < lg)
+          - ICON-ONLY navigation
+          - Fixed at bottom
+          - No text labels on mobile
+      ========================================================= */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#121212] border-t border-[#E5E7EB] dark:border-[#283038] px-2 py-2 shadow-card">
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`relative p-2.5 rounded-xl flex items-center justify-center transition-colors ${
+                  isActive
+                    ? 'bg-[#1B3D3D] text-white dark:bg-[#D5E5F2] dark:text-[#121212]'
+                    : 'text-[#6B7280] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#1E242B]'
+                }`}
+                aria-label={item.name}
+                title={item.name}
+              >
+                <Icon className="w-5 h-5" />
+                {item.badge && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#1B3D3D] dark:bg-[#D5E5F2] border border-white dark:border-[#121212]" />
+                )}
+              </Link>
+            );
+          })}
         </div>
-      )}
-    </aside>
+      </div>
+    </>
   );
 };
 

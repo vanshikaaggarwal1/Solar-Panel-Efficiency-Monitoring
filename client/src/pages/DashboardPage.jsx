@@ -14,12 +14,8 @@ import {
   Globe,
   RefreshCw,
   Search,
-  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  CheckCircle2,
-  AlertTriangle,
   Radio,
   Eye,
   Calendar,
@@ -56,14 +52,10 @@ ChartJS.register(
 );
 
 const DashboardPage = () => {
-  const registrationData = JSON.parse(
-    localStorage.getItem('solarixRegistration') || '{}'
-  );
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [panels, setPanels] = useState([]);
-  const [latestTelemetry, setLatestTelemetry] = useState([]);
   const [simulating, setSimulating] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'info' });
 
@@ -81,9 +73,7 @@ const DashboardPage = () => {
   });
 
   const panelIds = ['SP-101', 'SP-102', 'SP-103', 'SP-104', 'SP-105'];
-
-  const randomPanelId =
-    panelIds[Math.floor(Math.random() * panelIds.length)];
+  const randomPanelId = panelIds[Math.floor(Math.random() * panelIds.length)];
 
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -101,7 +91,6 @@ const DashboardPage = () => {
       let fetchedPanels = panelRes.data.success ? panelRes.data.data : [];
 
       if (telemetryRes.data?.success && telemetryRes.data.data.length > 0) {
-        setLatestTelemetry(telemetryRes.data.data);
         const telemetryMap = {};
         telemetryRes.data.data.forEach(t => {
           telemetryMap[t.panelId] = t;
@@ -146,9 +135,7 @@ const DashboardPage = () => {
   const handleManualSimulation = async () => {
     setSimulating(true);
     try {
-      await pushTelemetryTickApi({
-        panelId: randomPanelId
-      });
+      await pushTelemetryTickApi({ panelId: randomPanelId });
       setToast({ message: 'Sensor pulse received. Real-time telemetry updated.', type: 'success' });
       loadData(true);
     } catch (err) {
@@ -160,12 +147,12 @@ const DashboardPage = () => {
 
   if (loading || !dashboardData) {
     return (
-      <div className="flex h-screen bg-warmBg dark:bg-[#121212]">
+      <div className="flex h-screen bg-white dark:bg-[#121212]">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-forest-500">
-            <div className="w-10 h-10 border-3 border-forest-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-semibold text-secondaryText">Synchronizing Industrial Telemetry...</p>
+          <div className="flex flex-col items-center gap-3 text-[#1B3D3D] dark:text-[#D5E5F2]">
+            <div className="w-10 h-10 border-3 border-current border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs font-semibold text-[#6B7280] dark:text-slate-300">Synchronizing Solarix Telemetry...</p>
           </div>
         </div>
       </div>
@@ -174,7 +161,6 @@ const DashboardPage = () => {
 
   const { stats, charts } = dashboardData;
 
-  // Filtered Panels for Enterprise Table
   const filteredPanels = panels.filter((panel) => {
     const matchesSearch =
       panel.panelId.toLowerCase().includes(tableSearch.toLowerCase()) ||
@@ -190,32 +176,31 @@ const DashboardPage = () => {
     currentPage * itemsPerPage
   );
 
-  // Muted Palette Colors for Enterprise SaaS Charts
-  const colorForest = '#2E5E4E';
-  const colorOlive = '#6B8E23';
-  const colorCopper = '#B87333';
-  const colorSand = '#D8C3A5';
-  const colorGray = '#8E9AAF';
+  // Minimal Chart Colors
+  const mainColor = '#1B3D3D';
+  const accentColor = '#D5E5F2';
+  const borderGrey = '#E5E7EB';
+  const textGrey = '#6B7280';
 
-  // 1. Line Chart: Energy Generation vs Solar Irradiance
+  // 1. Line Chart
   const lineChartData = {
     labels: charts.hourlyLabels,
     datasets: [
       {
         label: 'Energy Output (kW)',
         data: charts.lineChartEnergy,
-        borderColor: colorForest,
-        backgroundColor: 'rgba(46, 94, 78, 0.08)',
+        borderColor: mainColor,
+        backgroundColor: 'rgba(27, 61, 61, 0.08)',
         fill: true,
         tension: 0.3,
         borderWidth: 2,
-        pointBackgroundColor: colorForest,
+        pointBackgroundColor: mainColor,
         pointRadius: 3
       },
       {
         label: 'Solar Irradiance (W/m² ÷ 20)',
         data: charts.lineChartIrradiance.map((val) => parseFloat((val / 20).toFixed(1))),
-        borderColor: colorOlive,
+        borderColor: textGrey,
         backgroundColor: 'transparent',
         borderDash: [4, 4],
         fill: false,
@@ -233,42 +218,42 @@ const DashboardPage = () => {
       legend: {
         position: 'top',
         align: 'end',
-        labels: { color: '#6B7280', font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+        labels: { color: textGrey, font: { family: 'Inter', size: 11 }, boxWidth: 12 }
       },
       tooltip: {
-        backgroundColor: '#1F1F1F',
-        titleColor: '#F3F4F6',
-        bodyColor: '#D1D5DB',
+        backgroundColor: '#121212',
+        titleColor: '#FFFFFF',
+        bodyColor: '#E5E7EB',
         padding: 10,
         cornerRadius: 8
       }
     },
     scales: {
-      x: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } },
-      y: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
+      x: { grid: { color: borderGrey }, ticks: { color: textGrey, font: { size: 10 } } },
+      y: { grid: { color: borderGrey }, ticks: { color: textGrey, font: { size: 10 } } }
     }
   };
 
-  // 2. Bar Chart: Daily Generation Comparison across Sectors
+  // 2. Bar Chart
   const barChartData = {
     labels: charts.barChartDailyOutput.labels,
     datasets: [
       {
         label: 'Rooftop Array',
         data: charts.barChartDailyOutput.datasets[0].data,
-        backgroundColor: colorForest,
+        backgroundColor: mainColor,
         borderRadius: 4
       },
       {
         label: 'Ground Sector',
         data: charts.barChartDailyOutput.datasets[1].data,
-        backgroundColor: colorOlive,
+        backgroundColor: textGrey,
         borderRadius: 4
       },
       {
         label: 'Carport East',
         data: charts.barChartDailyOutput.datasets[2].data,
-        backgroundColor: colorCopper,
+        backgroundColor: '#9CA3AF',
         borderRadius: 4
       }
     ]
@@ -281,22 +266,22 @@ const DashboardPage = () => {
       legend: {
         position: 'top',
         align: 'end',
-        labels: { color: '#6B7280', font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+        labels: { color: textGrey, font: { family: 'Inter', size: 11 }, boxWidth: 12 }
       }
     },
     scales: {
-      x: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { size: 10 } } },
-      y: { grid: { color: 'rgba(229, 231, 235, 0.4)' }, ticks: { color: '#9CA3AF', font: { size: 10 } } }
+      x: { grid: { display: false }, ticks: { color: textGrey, font: { size: 10 } } },
+      y: { grid: { color: borderGrey }, ticks: { color: textGrey, font: { size: 10 } } }
     }
   };
 
-  // 3. Donut Chart: Energy Utilization
+  // 3. Donut Chart
   const donutChartData = {
     labels: charts.pieChartUtilization.labels,
     datasets: [
       {
         data: charts.pieChartUtilization.data,
-        backgroundColor: [colorForest, colorOlive, colorCopper, colorGray],
+        backgroundColor: [mainColor, textGrey, '#9CA3AF', '#D1D5DB'],
         borderWidth: 2,
         borderColor: '#FFFFFF'
       }
@@ -310,7 +295,7 @@ const DashboardPage = () => {
     plugins: {
       legend: {
         position: 'right',
-        labels: { color: '#6B7280', font: { family: 'Inter', size: 11 }, boxWidth: 10 }
+        labels: { color: textGrey, font: { family: 'Inter', size: 11 }, boxWidth: 10 }
       }
     }
   };
@@ -319,33 +304,18 @@ const DashboardPage = () => {
     switch (status) {
       case 'Active':
         return (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-forest-500/10 text-forest-500 border border-forest-500/20">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#1B3D3D]/10 text-[#1B3D3D] dark:bg-[#D5E5F2]/20 dark:text-[#D5E5F2] border border-[#1B3D3D]/20 dark:border-[#D5E5F2]/30">
             Online
           </span>
         );
       case 'Degraded':
       case 'Warning':
-        return (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
-            Warning
-          </span>
-        );
       case 'Maintenance':
-        return (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sand-400/20 text-copper-600 border border-sand-400/40">
-            Maintenance
-          </span>
-        );
       case 'Offline':
       case 'Critical':
-        return (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
-            Offline
-          </span>
-        );
       default:
         return (
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#F3F4F6] text-[#6B7280] dark:bg-[#1E242B] dark:text-slate-300 border border-[#E5E7EB] dark:border-[#283038]">
             {status}
           </span>
         );
@@ -353,40 +323,37 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
+    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      {/* pb-24 lg:pb-8 ensures mobile bottom nav never hides content */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto space-y-6">
 
         {/* Top Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-forest-500 mb-1">
-              <Radio className="w-3.5 h-3.5 text-forest-500 animate-pulse" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#1B3D3D] dark:text-[#D5E5F2] mb-1">
+              <Radio className="w-3.5 h-3.5 animate-pulse" />
               <span>Substation Telemetry Operating Console</span>
             </div>
-            <h1 className="text-xl font-bold text-primaryText dark:text-white">
-              {registrationData.accountType === 'personal'
-                ? 'Residential Solar Overview'
-                : registrationData.accountType === 'business'
-                  ? 'Commercial Solar Overview'
-                  : 'Enterprise Solar Overview'}
+            <h1 className="text-xl font-bold text-[#111827] dark:text-white capitalize">
+              {user?.accountType ? `${user.accountType} Solar Overview` : 'Solarix Overview'}
             </h1>
-            <p className="text-xs text-secondaryText mt-0.5">
+            <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
               Welcome back, {user?.name || 'Operator'}.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] text-xs text-secondaryText">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F9FAFB] dark:bg-[#1E242B] border border-[#E5E7EB] dark:border-[#283038] text-xs text-[#6B7280] dark:text-slate-400">
+              <Calendar className="w-3.5 h-3.5" />
               <span>{currentDate}</span>
             </div>
 
             <button
               onClick={handleManualSimulation}
               disabled={simulating}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-forest-500 hover:bg-forest-600 text-white font-semibold text-xs transition-colors shadow-subtle"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1B3D3D] dark:bg-[#D5E5F2] hover:opacity-90 text-white dark:text-[#121212] font-semibold text-xs transition-colors shadow-subtle"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${simulating ? 'animate-spin' : ''}`} />
               <span>Sync Sensor Pulse</span>
@@ -396,8 +363,6 @@ const DashboardPage = () => {
 
         {/* 6 Core KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
-
-          {/* 1. Total Energy (MWh) */}
           <StatCard
             title="Total Energy"
             value={stats.monthlyEnergyKWh ? (stats.monthlyEnergyKWh / 1000).toFixed(1) : '428.5'}
@@ -408,7 +373,6 @@ const DashboardPage = () => {
             subtext="Rated: 500 MWh"
           />
 
-          {/* 2. Today's Production (kWh) */}
           <StatCard
             title="Today's Production"
             value={stats.energyTodayKWh || '1,420'}
@@ -419,7 +383,6 @@ const DashboardPage = () => {
             subtext="6.2 Active Hrs"
           />
 
-          {/* 3. Average Efficiency (%) */}
           <StatCard
             title="Average Efficiency"
             value={stats.avgEfficiency || '21.8'}
@@ -430,7 +393,6 @@ const DashboardPage = () => {
             subtext="Peak: 23.5%"
           />
 
-          {/* 4. Active Panels */}
           <StatCard
             title="Active Panels"
             value={`${stats.activePanels} / ${stats.totalPanels}`}
@@ -441,7 +403,6 @@ const DashboardPage = () => {
             subtext={`${stats.offlinePanels} Offline`}
           />
 
-          {/* 5. Revenue Estimate ($) */}
           <StatCard
             title="Revenue Estimate"
             value={`$${stats.revenueEstimateUsd ? stats.revenueEstimateUsd.toLocaleString() : '18,450'}`}
@@ -452,7 +413,6 @@ const DashboardPage = () => {
             subtext="Rate $0.12/kWh"
           />
 
-          {/* 6. Carbon Offset (Tons) */}
           <StatCard
             title="Carbon Offset"
             value={stats.carbonSavedKg ? (stats.carbonSavedKg / 1000).toFixed(1) : '14.2'}
@@ -462,7 +422,6 @@ const DashboardPage = () => {
             trendValue="-14.2t CO₂"
             subtext="Equiv 680 trees"
           />
-
         </div>
 
         {/* 4 Enterprise Chart Widgets */}
@@ -472,14 +431,14 @@ const DashboardPage = () => {
           <div className="saas-card p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                <h3 className="text-sm font-bold text-[#111827] dark:text-white">
                   Generation vs Solar Irradiance
                 </h3>
-                <p className="text-[11px] text-secondaryText">
+                <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
                   2-Hour sensor sampling windows across active daytime spectrum
                 </p>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest-500/10 text-forest-500">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#1B3D3D]/10 text-[#1B3D3D] dark:bg-[#D5E5F2]/20 dark:text-[#D5E5F2]">
                 Live Line Chart
               </span>
             </div>
@@ -492,15 +451,15 @@ const DashboardPage = () => {
           <div className="saas-card p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-primaryText dark:text-white">
+                <h3 className="text-sm font-bold text-[#111827] dark:text-white">
                   Daily Generation Comparison
                 </h3>
-                <p className="text-[11px] text-secondaryText">
+                <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
                   7-Day output comparison (kWh) between Rooftop, Ground & Carport arrays
                 </p>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-olive-500/10 text-olive-600">
-                Bar Chart
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#1B3D3D]/10 text-[#1B3D3D] dark:bg-[#D5E5F2]/20 dark:text-[#D5E5F2]">
+                7-Day Comparison
               </span>
             </div>
             <div className="h-64">
@@ -508,126 +467,126 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Chart 3: Donut Chart */}
-          <div className="saas-card p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-primaryText dark:text-white">
-                  Energy Utilization & Load Breakdown
-                </h3>
-                <p className="text-[11px] text-secondaryText">
-                  Direct load vs battery ESS charge vs grid export breakdown (%)
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-copper-500/10 text-copper-600">
-                Donut Chart
-              </span>
-            </div>
-            <div className="h-64">
-              <Doughnut data={donutChartData} options={donutChartOptions} />
-            </div>
-          </div>
-
-          {/* Chart 4: Efficiency Gauge */}
+          {/* Chart 3: Gauge Chart */}
           <div className="saas-card p-5 space-y-3 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-primaryText dark:text-white">
-                  Photovoltaic Fleet Conversion Rate
+                <h3 className="text-sm font-bold text-[#111827] dark:text-white">
+                  Fleet Photovoltaic Efficiency Gauge
                 </h3>
-                <p className="text-[11px] text-secondaryText">
-                  Overall photovoltaic conversion efficiency against benchmark target
+                <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+                  Real-time fleet conversion rating against STC (Standard Test Conditions)
                 </p>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-sand-400/20 text-copper-600">
-                Efficiency Gauge
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#1B3D3D]/10 text-[#1B3D3D] dark:bg-[#D5E5F2]/20 dark:text-[#D5E5F2]">
+                Gauge Metric
               </span>
             </div>
-            <GaugeChart percentage={stats.avgEfficiency} max={30} title="Photovoltaic Efficiency" />
+            <div className="py-2">
+              <GaugeChart percentage={stats.avgEfficiency || 21.8} max={30} title="Fleet Efficiency (%)" />
+            </div>
+            <div className="p-3 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs flex items-center justify-between">
+              <span className="text-[11px] text-[#6B7280] dark:text-slate-400">Optimal Range Standard</span>
+              <span className="font-semibold text-[#111827] dark:text-white">20.0% – 25.0%</span>
+            </div>
+          </div>
+
+          {/* Chart 4: Utilization Donut Chart */}
+          <div className="saas-card p-5 space-y-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-[#111827] dark:text-white">
+                  Energy Distribution & Grid Export
+                </h3>
+                <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+                  Self-consumption vs BESS storage & Utility grid feed-in ratio
+                </p>
+              </div>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#1B3D3D]/10 text-[#1B3D3D] dark:bg-[#D5E5F2]/20 dark:text-[#D5E5F2]">
+                Donut Metric
+              </span>
+            </div>
+            <div className="h-56 relative flex items-center justify-center">
+              <Doughnut data={donutChartData} options={donutChartOptions} />
+            </div>
+            <div className="p-3 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs flex items-center justify-between">
+              <span className="text-[11px] text-[#6B7280] dark:text-slate-400">Grid Feed-in Active</span>
+              <span className="font-semibold text-[#1B3D3D] dark:text-[#D5E5F2] flex items-center gap-1">
+                <ArrowUpRight className="w-3.5 h-3.5" /> 58% Exported
+              </span>
+            </div>
           </div>
 
         </div>
 
-        {/* Enterprise Telemetry Data Table */}
-        <div className="saas-card p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Live Panel Telemetry Table */}
+        <div className="saas-card overflow-hidden">
+          <div className="p-5 border-b border-[#E5E7EB] dark:border-[#283038] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-primaryText dark:text-white">
-                Live Substation Array Telemetry
+              <h3 className="text-sm font-bold text-[#111827] dark:text-white">
+                Solar Panel Monitoring Console
               </h3>
-              <p className="text-[11px] text-secondaryText">
-                Real-time panel array status, voltage output, and efficiency scores
+              <p className="text-[11px] text-[#6B7280] dark:text-slate-400">
+                Real-time array telemetry and electrical parameters
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="relative w-48 sm:w-60">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-48">
+                <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
-                  placeholder="Search panel ID or location..."
+                  placeholder="Search array..."
                   value={tableSearch}
                   onChange={(e) => { setTableSearch(e.target.value); setCurrentPage(1); }}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs text-[#111827] dark:text-white focus:outline-none"
                 />
               </div>
 
-              {/* Status Filter */}
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="px-3 py-1.5 text-xs rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                className="px-3 py-1.5 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs text-[#6B7280] dark:text-slate-300 focus:outline-none"
               >
                 <option value="All">All Statuses</option>
-                <option value="Active">Online</option>
-                <option value="Degraded">Warning</option>
+                <option value="Active">Active / Online</option>
+                <option value="Degraded">Degraded</option>
                 <option value="Maintenance">Maintenance</option>
                 <option value="Offline">Offline</option>
               </select>
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="overflow-x-auto rounded-xl border border-borderNeutral dark:border-[#262626]">
+          <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold sticky top-0">
+              <thead className="bg-[#F9FAFB] dark:bg-[#121212] text-[#6B7280] dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-[#E5E7EB] dark:border-[#283038]">
                 <tr>
-                  <th className="py-3 px-4">Panel ID</th>
-                  <th className="py-3 px-4">Location</th>
-                  <th className="py-3 px-4">Power Output</th>
-                  <th className="py-3 px-4">Voltage</th>
-                  <th className="py-3 px-4">Temp</th>
-                  <th className="py-3 px-4">Efficiency</th>
-                  <th className="py-3 px-4">Status</th>
+                  <th className="px-5 py-3">Panel ID</th>
+                  <th className="px-5 py-3">Model</th>
+                  <th className="px-5 py-3">Location</th>
+                  <th className="px-5 py-3">Output (kW)</th>
+                  <th className="px-5 py-3">Efficiency</th>
+                  <th className="px-5 py-3">Temp (°C)</th>
+                  <th className="px-5 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-borderNeutral dark:divide-[#262626]">
+              <tbody className="divide-y divide-[#E5E7EB] dark:divide-[#283038] text-[#111827] dark:text-slate-200">
                 {paginatedPanels.length > 0 ? (
                   paginatedPanels.map((panel) => (
-                    <tr
-                      key={panel.panelId}
-                      className="hover:bg-slate-50/60 dark:hover:bg-[#222] transition-colors"
-                    >
-                      <td className="py-3 px-4 font-semibold text-primaryText dark:text-white">
-                        {panel.panelId}
-                      </td>
-                      <td className="py-3 px-4 text-secondaryText">{panel.location}</td>
-                      <td className="py-3 px-4 font-medium text-primaryText dark:text-slate-200">
-                        {panel.currentPowerKW} kW
-                      </td>
-                      <td className="py-3 px-4 text-secondaryText">{panel.voltageV} V</td>
-                      <td className="py-3 px-4 text-secondaryText">{panel.temperatureC}°C</td>
-                      <td className="py-3 px-4 font-medium text-forest-500">
-                        {panel.efficiencyPct}%
-                      </td>
-                      <td className="py-3 px-4">{getStatusBadge(panel.status)}</td>
+                    <tr key={panel._id} className="hover:bg-[#F9FAFB] dark:hover:bg-[#121212]/50 transition-colors">
+                      <td className="px-5 py-3.5 font-semibold text-[#1B3D3D] dark:text-[#D5E5F2]">{panel.panelId}</td>
+                      <td className="px-5 py-3.5">{panel.model}</td>
+                      <td className="px-5 py-3.5 text-[#6B7280] dark:text-slate-400">{panel.location}</td>
+                      <td className="px-5 py-3.5 font-bold">{panel.currentOutputKW || panel.currentPowerKW || 0} kW</td>
+                      <td className="px-5 py-3.5 font-semibold">{panel.efficiency || panel.efficiencyPct || 0}%</td>
+                      <td className="px-5 py-3.5">{panel.temperatureC || 25}°C</td>
+                      <td className="px-5 py-3.5">{getStatusBadge(panel.status)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="py-8 text-center text-secondaryText text-xs">
-                      No array panels found matching current filters.
+                    <td colSpan="7" className="px-5 py-8 text-center text-[#6B7280]">
+                      No solar panels found matching search filters.
                     </td>
                   </tr>
                 )}
@@ -635,34 +594,26 @@ const DashboardPage = () => {
             </table>
           </div>
 
-          {/* Pagination Controls */}
-          <div className="flex items-center justify-between text-xs text-secondaryText pt-2">
-            <span>
-              Showing {paginatedPanels.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} to{' '}
-              {Math.min(currentPage * itemsPerPage, filteredPanels.length)} of {filteredPanels.length} panels
-            </span>
-
+          <div className="p-4 border-t border-[#E5E7EB] dark:border-[#283038] flex items-center justify-between text-xs text-[#6B7280] dark:text-slate-400">
+            <span>Showing {paginatedPanels.length} of {filteredPanels.length} panels</span>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded-lg border border-borderNeutral dark:border-[#333] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-[#E5E7EB] dark:border-[#283038] disabled:opacity-40"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="font-semibold text-primaryText dark:text-white">
-                {currentPage} / {totalPages}
-              </span>
+              <span>Page {currentPage} of {totalPages}</span>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded-lg border border-borderNeutral dark:border-[#333] hover:bg-slate-100 dark:hover:bg-[#2A2A2A] disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-[#E5E7EB] dark:border-[#283038] disabled:opacity-40"
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-
         </div>
 
       </main>

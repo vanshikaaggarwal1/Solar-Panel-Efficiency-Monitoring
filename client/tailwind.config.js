@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config'} */
+/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -8,57 +8,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        warmBg: '#F4F1EA',
-        sidebarBg: '#173D33',
-        primaryText: '#173D33',
-        secondaryText: '#356B5B',
-        darkSecondary: '#7A8178',
-        tertiaryText: '#7A8178',
-        borderNeutral: '#D8D4CA',
-        stoneBorder: '#C7C2B7',
+        // Main colors requested by user
+        tealMain: '#1B3D3D',
+        iceBlue: '#D5E5F2',
+        darkBg: '#121212',
+        darkSurface: '#1E242B',
+        darkBorder: '#283038',
+        lightGreyBg: '#F9FAFB',
+        lightGreyBorder: '#E5E7EB',
+        lightGreyText: '#6B7280',
+        blackText: '#111827',
 
-        forest: {
-          500: '#356B5B',
-          600: '#245546',
-          700: '#173D33'
+        // Standardized brand color mappings
+        brand: {
+          50: '#F0F5F5',
+          100: '#DDE9E9',
+          200: '#BED4D4',
+          300: '#95B8B8',
+          400: '#649494',
+          500: '#1B3D3D', // Light Mode Main Color
+          600: '#153131',
+          700: '#102424',
+          800: '#0C1A1A',
+          900: '#071010'
         },
 
-        sage: {
-          400: '#9AA79D',
-          500: '#7F9185',
-          600: '#66766B'
-        },
-
-        olive: {
-          500: '#8A8B68',
-          600: '#707153'
-        },
-
-        pewter: {
-          300: '#F1EEE6',
-          400: '#D8D4CA',
-          500: '#BDB8AA'
-        },
-
-        sand: {
-          300: '#E9DFCD',
-          400: '#D2C1A5',
-          500: '#B9A27F'
-        },
-
-        copper: {
-          500: '#B86F50',
-          600: '#96553D'
-        },
-
-        port: {
-          500: '#79505A',
-          600: '#603C45'
-        },
-
-        charcoal: {
-          800: '#245546',
-          900: '#173D33'
+        // Dark mode main accent color palette
+        darkAccent: {
+          50: '#F4F9FD',
+          100: '#E6F1FA',
+          200: '#D5E5F2', // Dark Mode Main Color
+          300: '#A9CBDF',
+          400: '#7BAECC',
+          500: '#5291B5',
+          600: '#3D7494'
         }
       },
 
@@ -73,9 +56,9 @@ export default {
       },
 
       boxShadow: {
-        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02)',
-        'card': '0 2px 6px 0 rgba(0, 0, 0, 0.04)',
-        'dropdown': '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)'
+        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+        'dropdown': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)'
       }
     },
   },

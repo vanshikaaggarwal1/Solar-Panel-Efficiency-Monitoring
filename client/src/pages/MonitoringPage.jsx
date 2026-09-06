@@ -430,18 +430,18 @@ const MonitoringPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-warmBg dark:bg-[#121212] text-primaryText dark:text-neutral-100 transition-colors">
+    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto space-y-6">
 
         {/* Header & Main Controls Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primaryText dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827] dark:text-white">
               Solar Panels Fleet Inventory
             </h1>
-            <p className="text-xs text-secondaryText mt-0.5">
+            <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-0.5">
               Monitor, calibrate, and configure individual photovoltaic panel telemetry modules
             </p>
           </div>
