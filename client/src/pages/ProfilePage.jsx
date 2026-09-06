@@ -91,10 +91,10 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1400px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1400px] w-full min-w-0 mx-auto space-y-6 overflow-x-hidden">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
@@ -117,7 +117,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-[#E5E7EB] dark:border-[#283038] text-xs overflow-x-auto">
+        <div className="horizontal-scroll-container flex items-center gap-2 border-b border-[#E5E7EB] dark:border-[#283038] text-xs">
           {[
             { id: 'profile', label: 'Operator Details', icon: User },
             { id: 'preferences', label: 'System Preferences', icon: Sliders },

@@ -177,10 +177,10 @@ const AnalyticsPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] w-full min-w-0 mx-auto space-y-6 overflow-x-hidden">
         
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-borderNeutral dark:border-[#262626]">
@@ -268,8 +268,10 @@ const AnalyticsPage = () => {
                 Monthly MWh
               </span>
             </div>
-            <div className="h-64">
-              <Bar data={productionChartData} options={productionOptions} />
+            <div className="horizontal-scroll-container">
+              <div className="h-64 min-w-[550px]">
+                <Bar data={productionChartData} options={productionOptions} />
+              </div>
             </div>
           </div>
 
@@ -288,8 +290,10 @@ const AnalyticsPage = () => {
                 Retention %
               </span>
             </div>
-            <div className="h-64">
-              <Line data={degradationChartData} options={degradationOptions} />
+            <div className="horizontal-scroll-container">
+              <div className="h-64 min-w-[550px]">
+                <Line data={degradationChartData} options={degradationOptions} />
+              </div>
             </div>
           </div>
 
@@ -297,7 +301,7 @@ const AnalyticsPage = () => {
 
         {/* Performance Heatmap Grid */}
         <div className="saas-card p-5 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-sm font-bold text-primaryText dark:text-white">
                 Diurnal Generation Heatmap Grid (7 Days × Diurnal Windows)
@@ -307,7 +311,7 @@ const AnalyticsPage = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 text-[11px] text-secondaryText">
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-secondaryText">
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded bg-slate-200 dark:bg-neutral-800"></span> Low (&lt;20%)
               </span>
@@ -320,8 +324,8 @@ const AnalyticsPage = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-borderNeutral dark:border-[#262626]">
-            <table className="w-full text-center text-xs">
+          <div className="horizontal-scroll-container rounded-xl border border-borderNeutral dark:border-[#262626]">
+            <table className="w-full min-w-[700px] text-center text-xs">
               <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold">
                 <tr>
                   <th className="py-2.5 px-3 text-left">Day / Slot</th>

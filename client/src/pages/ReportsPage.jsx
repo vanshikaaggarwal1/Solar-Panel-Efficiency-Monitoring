@@ -113,10 +113,10 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] w-full min-w-0 mx-auto space-y-6 overflow-x-hidden">
         
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
@@ -228,8 +228,8 @@ const ReportsPage = () => {
           {/* Breakdown Table */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold text-primaryText dark:text-white">Array Sector Breakdown</h4>
-            <div className="overflow-x-auto rounded-xl border border-borderNeutral dark:border-[#262626]">
-              <table className="w-full text-left text-xs">
+            <div className="horizontal-scroll-container rounded-xl border border-borderNeutral dark:border-[#262626]">
+              <table className="w-full min-w-[550px] text-left text-xs">
                 <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold">
                   <tr>
                     <th className="py-2.5 px-4">Array Sector</th>
@@ -248,14 +248,8 @@ const ReportsPage = () => {
                   <tr>
                     <td className="py-2.5 px-4 font-semibold text-primaryText dark:text-white">Ground Mount Solar Farm</td>
                     <td className="py-2.5 px-4 text-secondaryText">120 Panels</td>
-                    <td className="py-2.5 px-4 font-medium text-primaryText dark:text-white">198,400 kWh</td>
-                    <td className="py-2.5 px-4 font-semibold text-forest-500">84.8%</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 px-4 font-semibold text-primaryText dark:text-white">Carport Canopy East</td>
-                    <td className="py-2.5 px-4 text-secondaryText">32 Panels</td>
-                    <td className="py-2.5 px-4 font-medium text-primaryText dark:text-white">45,900 kWh</td>
-                    <td className="py-2.5 px-4 font-semibold text-copper-600">81.5%</td>
+                    <td className="py-2.5 px-4 font-medium text-primaryText dark:text-white">244,300 kWh</td>
+                    <td className="py-2.5 px-4 font-semibold text-forest-500">88.4%</td>
                   </tr>
                 </tbody>
               </table>
@@ -263,10 +257,10 @@ const ReportsPage = () => {
           </div>
 
           {/* Quick Export Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-borderNeutral dark:border-[#262626]">
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-borderNeutral dark:border-[#262626]">
             <button
               onClick={() => exportCSV(reports[0] || {})}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-borderNeutral dark:border-[#333] text-xs font-semibold text-secondaryText hover:text-primaryText transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-borderNeutral dark:border-[#333] text-secondaryText hover:text-primaryText text-xs font-semibold transition-colors"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>Export CSV</span>
@@ -288,8 +282,8 @@ const ReportsPage = () => {
             Historical Report Archive
           </h3>
 
-          <div className="overflow-x-auto rounded-xl border border-borderNeutral dark:border-[#262626]">
-            <table className="w-full text-left text-xs">
+          <div className="horizontal-scroll-container rounded-xl border border-borderNeutral dark:border-[#262626]">
+            <table className="w-full min-w-[650px] text-left text-xs">
               <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold">
                 <tr>
                   <th className="py-3 px-4">Report Identifier</th>

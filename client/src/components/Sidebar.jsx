@@ -95,17 +95,19 @@ const Sidebar = () => {
   return (
     <>
       {/* =========================================================
-          DESKTOP SIDEBAR NAVIGATION (Large Screens: lg and up)
+          DESKTOP FIXED SIDEBAR NAVIGATION (Large Screens: lg and up)
+          - Fixed to screen viewport (sticky top-16 h-[calc(100vh-4rem)])
+          - Pinned visible even when page content scrolls
       ========================================================= */}
       <aside
-        className={`hidden lg:flex flex-col bg-white dark:bg-[#121212] text-[#111827] dark:text-white border-r border-[#E5E7EB] dark:border-[#283038] transition-all duration-200 relative z-30 ${
+        className={`hidden lg:flex flex-col bg-white dark:bg-[#121212] text-[#111827] dark:text-white border-r border-[#E5E7EB] dark:border-[#283038] sticky top-16 h-[calc(100vh-4rem)] flex-shrink-0 transition-all duration-200 z-30 overflow-hidden ${
           collapsed ? 'w-16' : 'w-60'
         }`}
       >
         {/* Collapse/Expand Toggle Button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-white dark:bg-[#1E242B] text-[#6B7280] dark:text-slate-300 border border-[#E5E7EB] dark:border-[#283038] flex items-center justify-center shadow-subtle hover:text-[#1B3D3D] dark:hover:text-[#D5E5F2] transition-colors"
+          className="absolute -right-3 top-6 w-6 h-6 rounded-full bg-white dark:bg-[#1E242B] text-[#6B7280] dark:text-slate-300 border border-[#E5E7EB] dark:border-[#283038] flex items-center justify-center shadow-subtle hover:text-[#1B3D3D] dark:hover:text-[#D5E5F2] transition-colors z-40"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -132,7 +134,7 @@ const Sidebar = () => {
         )}
 
         {/* Navigation Menu Links */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-hidden">
           {!collapsed && (
             <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-[#6B7280] dark:text-slate-400">
               Platform Menu
@@ -192,12 +194,12 @@ const Sidebar = () => {
       </aside>
 
       {/* =========================================================
-          MOBILE BOTTOM NAVIGATION BAR (Small Screens: < lg)
-          - ICON-ONLY navigation
-          - Fixed at bottom
-          - No text labels on mobile
+          MOBILE FIXED BOTTOM NAVIGATION BAR (Small Screens: < lg)
+          - Fixed at viewport bottom (fixed bottom-0 left-0 right-0 z-50)
+          - ICON-ONLY navigation (no text)
+          - Touch-friendly min 44px tap target size
       ========================================================= */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#121212] border-t border-[#E5E7EB] dark:border-[#283038] px-2 py-2 shadow-card">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 h-16 bg-white dark:bg-[#121212] border-t border-[#E5E7EB] dark:border-[#283038] px-2 py-1.5 shadow-card overflow-hidden touch-manipulation">
         <div className="flex items-center justify-around max-w-md mx-auto">
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -206,7 +208,7 @@ const Sidebar = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`relative p-2.5 rounded-xl flex items-center justify-center transition-colors ${
+                className={`relative p-3 rounded-xl flex items-center justify-center min-w-[44px] min-h-[44px] transition-colors ${
                   isActive
                     ? 'bg-[#1B3D3D] text-white dark:bg-[#D5E5F2] dark:text-[#121212]'
                     : 'text-[#6B7280] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#1E242B]'
@@ -214,9 +216,9 @@ const Sidebar = () => {
                 aria-label={item.name}
                 title={item.name}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5 flex-shrink-0" />
                 {item.badge && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#1B3D3D] dark:bg-[#D5E5F2] border border-white dark:border-[#121212]" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#1B3D3D] dark:bg-[#D5E5F2] border border-white dark:border-[#121212]" />
                 )}
               </Link>
             );

@@ -119,10 +119,10 @@ const AlertsPage = () => {
   const resolvedCount = alerts.filter((a) => a.status === 'Resolved').length;
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1400px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1400px] w-full min-w-0 mx-auto space-y-6 overflow-x-hidden">
         
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
@@ -180,14 +180,14 @@ const AlertsPage = () => {
         </div>
 
         {/* Filter Controls */}
-        <div className="saas-card p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
+        <div className="saas-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-secondaryText font-medium">Status:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
                 <option value="All">All Statuses</option>
                 <option value="Active">Active</option>
@@ -196,12 +196,12 @@ const AlertsPage = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-secondaryText font-medium">Severity:</span>
               <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
+                className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-warmBg dark:bg-[#222] border border-borderNeutral dark:border-[#333] text-primaryText dark:text-white focus:outline-none focus:ring-1 focus:ring-forest-500"
               >
                 <option value="All">All Severities</option>
                 <option value="Critical">Critical</option>

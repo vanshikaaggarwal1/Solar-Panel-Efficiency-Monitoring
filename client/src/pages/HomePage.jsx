@@ -133,7 +133,7 @@ const HomePage = () => {
   const techBadges = ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Chart.js', 'JWT'];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors w-full max-w-full overflow-x-hidden">
 
       {/* ================= 1. HERO SECTION (#home) ================= */}
       <section id="home" className="relative overflow-hidden px-4 sm:px-6 lg:px-8 pt-16 pb-24 text-center scroll-mt-20">

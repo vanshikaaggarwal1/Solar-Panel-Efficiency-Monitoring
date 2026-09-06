@@ -323,11 +323,11 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
       {/* pb-24 lg:pb-8 ensures mobile bottom nav never hides content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto space-y-6">
+      <main className="flex-1 p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] w-full min-w-0 mx-auto space-y-6 overflow-x-hidden">
 
         {/* Top Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
@@ -362,7 +362,7 @@ const DashboardPage = () => {
         </div>
 
         {/* 6 Core KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           <StatCard
             title="Total Energy"
             value={stats.monthlyEnergyKWh ? (stats.monthlyEnergyKWh / 1000).toFixed(1) : '428.5'}
@@ -442,8 +442,10 @@ const DashboardPage = () => {
                 Live Line Chart
               </span>
             </div>
-            <div className="h-64">
-              <Line data={lineChartData} options={lineChartOptions} />
+            <div className="horizontal-scroll-container">
+              <div className="h-64 min-w-[550px]">
+                <Line data={lineChartData} options={lineChartOptions} />
+              </div>
             </div>
           </div>
 
@@ -462,8 +464,10 @@ const DashboardPage = () => {
                 7-Day Comparison
               </span>
             </div>
-            <div className="h-64">
-              <Bar data={barChartData} options={barChartOptions} />
+            <div className="horizontal-scroll-container">
+              <div className="h-64 min-w-[550px]">
+                <Bar data={barChartData} options={barChartOptions} />
+              </div>
             </div>
           </div>
 
@@ -482,7 +486,7 @@ const DashboardPage = () => {
                 Gauge Metric
               </span>
             </div>
-            <div className="py-2">
+            <div className="py-2 flex justify-center">
               <GaugeChart percentage={stats.avgEfficiency || 21.8} max={30} title="Fleet Efficiency (%)" />
             </div>
             <div className="p-3 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs flex items-center justify-between">
@@ -532,7 +536,7 @@ const DashboardPage = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-48">
+              <div className="relative w-full sm:w-48">
                 <Search className="w-3.5 h-3.5 text-[#6B7280] dark:text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
@@ -546,7 +550,7 @@ const DashboardPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="px-3 py-1.5 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs text-[#6B7280] dark:text-slate-300 focus:outline-none"
+                className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-[#F9FAFB] dark:bg-[#121212] border border-[#E5E7EB] dark:border-[#283038] text-xs text-[#6B7280] dark:text-slate-300 focus:outline-none"
               >
                 <option value="All">All Statuses</option>
                 <option value="Active">Active / Online</option>
@@ -557,8 +561,8 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="horizontal-scroll-container">
+            <table className="w-full min-w-[700px] text-left text-xs">
               <thead className="bg-[#F9FAFB] dark:bg-[#121212] text-[#6B7280] dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-[#E5E7EB] dark:border-[#283038]">
                 <tr>
                   <th className="px-5 py-3">Panel ID</th>

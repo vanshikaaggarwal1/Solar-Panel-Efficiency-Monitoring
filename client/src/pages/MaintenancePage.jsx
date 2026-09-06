@@ -147,10 +147,10 @@ const MaintenancePage = () => {
   const calendarDays = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-white dark:bg-[#121212] text-[#111827] dark:text-white transition-colors">
       <Sidebar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto space-y-6">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] w-full min-w-0 mx-auto space-y-6 overflow-x-hidden">
         
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#283038]">
@@ -241,11 +241,11 @@ const MaintenancePage = () => {
         ) : viewMode === 'calendar' ? (
           /* CALENDAR VIEW */
           <div className="saas-card p-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="text-sm font-bold text-primaryText dark:text-white">
                 August 2026 Scheduled Maintenance Grid
               </h3>
-              <div className="flex items-center gap-2 text-xs text-secondaryText">
+              <div className="flex items-center gap-3 text-xs text-secondaryText">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-forest-500"></span> Completed
                 </span>
@@ -255,50 +255,52 @@ const MaintenancePage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 text-center text-xs">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <div key={d} className="py-1.5 font-bold text-secondaryText uppercase tracking-wider text-[10px]">
-                  {d}
-                </div>
-              ))}
-
-              {calendarDays.map((day) => {
-                const dayTickets = tickets.filter((t) => {
-                  const dNum = t.scheduledDate ? new Date(t.scheduledDate).getDate() : 0;
-                  return dNum === day;
-                });
-
-                return (
-                  <div
-                    key={day}
-                    className="min-h-[72px] p-1.5 rounded-xl bg-slate-50 dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] text-left flex flex-col justify-between"
-                  >
-                    <span className="text-[10px] font-bold text-secondaryText">{day}</span>
-                    <div className="space-y-1">
-                      {dayTickets.map((t) => (
-                        <div
-                          key={t._id || t.id}
-                          className={`p-1 rounded text-[10px] truncate font-medium ${
-                            t.status === 'Completed'
-                              ? 'bg-forest-500/15 text-forest-500'
-                              : 'bg-copper-500/15 text-copper-600'
-                          }`}
-                          title={`${t.panelId}: ${t.issue}`}
-                        >
-                          {t.panelId}
-                        </div>
-                      ))}
-                    </div>
+            <div className="horizontal-scroll-container">
+              <div className="min-w-[550px] grid grid-cols-7 gap-2 text-center text-xs">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                  <div key={d} className="py-1.5 font-bold text-secondaryText uppercase tracking-wider text-[10px]">
+                    {d}
                   </div>
-                );
-              })}
+                ))}
+
+                {calendarDays.map((day) => {
+                  const dayTickets = tickets.filter((t) => {
+                    const dNum = t.scheduledDate ? new Date(t.scheduledDate).getDate() : 0;
+                    return dNum === day;
+                  });
+
+                  return (
+                    <div
+                      key={day}
+                      className="min-h-[72px] p-1.5 rounded-xl bg-slate-50 dark:bg-[#1A1A1A] border border-borderNeutral dark:border-[#262626] text-left flex flex-col justify-between"
+                    >
+                      <span className="text-[10px] font-bold text-secondaryText">{day}</span>
+                      <div className="space-y-1">
+                        {dayTickets.map((t) => (
+                          <div
+                            key={t._id || t.id}
+                            className={`p-1 rounded text-[10px] truncate font-medium ${
+                              t.status === 'Completed'
+                                ? 'bg-forest-500/15 text-forest-500'
+                                : 'bg-copper-500/15 text-copper-600'
+                            }`}
+                            title={`${t.panelId}: ${t.issue}`}
+                          >
+                            {t.panelId}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (
           /* WORK ORDERS LIST VIEW */
           <div className="saas-card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="horizontal-scroll-container">
+              <table className="w-full min-w-[750px] text-left text-xs">
                 <thead className="bg-slate-50 dark:bg-[#1A1A1A] border-b border-borderNeutral dark:border-[#262626] text-secondaryText font-semibold sticky top-0">
                   <tr>
                     <th className="py-3 px-4">Work Order</th>
